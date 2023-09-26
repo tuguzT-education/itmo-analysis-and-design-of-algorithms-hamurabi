@@ -1,12 +1,6 @@
 cmake_minimum_required(VERSION 3.26)
-project(Hammurabi)
+project(Hamurabi)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(Hammurabi
-        src/main.cpp
-        src/Hammurabi/City.h
-        src/Hammurabi/PlayerInput.h
-        src/Hammurabi/PlayerOutput.h
-        src/Hammurabi/Resources.h
-        src/Hammurabi/Game.h src/Hammurabi/Game.cpp)
+add_executable(Hamurabi src/main.cpp src/Hamurabi/Game.h)
