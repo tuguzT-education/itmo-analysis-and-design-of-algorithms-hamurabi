@@ -44,7 +44,7 @@ void PrintNotEnoughGrain(const hamurabi::NotEnoughGrain error) {
 
 void PrintNotEnoughPeople(const hamurabi::NotEnoughPeople error) {
     std::cout << "HAMURABI: THINK AGAIN. YOU HAVE ONLY "
-              << error.People() << " PEOPLE TO TEND THE FIELDS! NOW THEN,\n";
+              << error.Population() << " PEOPLE TO TEND THE FIELDS! NOW THEN,\n";
 }
 
 void PrintGameOver(const hamurabi::GameOver game_over) {
@@ -134,7 +134,7 @@ hamurabi::RoundInput ReceiveRoundInput(const hamurabi::Game<T> &game) {
     const auto area_to_sell = ReceiveAreaToSell(game);
     const auto grain_to_feed = ReceiveGrainToFeed(game);
     const auto area_to_plant = ReceiveAreaToPlant(game);
-    std::cout << std::endl;
+    std::cout << "\n";
 
     return hamurabi::RoundInput{
         .area_to_buy = area_to_buy,
@@ -145,36 +145,36 @@ hamurabi::RoundInput ReceiveRoundInput(const hamurabi::Game<T> &game) {
 }
 
 template<class T>
-void PrintRoundOutput(const hamurabi::RoundOutput output, const hamurabi::Game<T> &game) {
+void PrintGameState(const hamurabi::Game<T> &game) {
     std::cout << "HAMURABI:  I BEG TO REPORT TO YOU,\n"
                  "IN YEAR " << game.CurrentRound() << ",";
-    if (output.dead_people_count > 0) {
-        std::cout << " " << output.dead_people_count << " PEOPLE STARVED,";
+    if (game.Dead() > 0) {
+        std::cout << " " << game.Dead() << " PEOPLE STARVED,";
     }
-    if (output.new_people_count > 0) {
-        std::cout << " " << output.new_people_count << " CAME TO THE CITY,";
+    if (game.Arrived() > 0) {
+        std::cout << " " << game.Arrived() << " CAME TO THE CITY,";
     }
     std::cout << "\n";
 
-    if (output.is_plague) {
+    if (game.IsPlague()) {
         std::cout << "A HORRIBLE PLAGUE STRUCK!  HALF THE PEOPLE DIED.\n";
     }
     std::cout << "POPULATION IS NOW " << game.Population() << "\n"
               << "THE CITY NOW OWNS " << game.Area() << " ACRES\n"
-              << "YOU HARVESTED " << output.grain_from_acre << " BUSHELS PER ACRE.\n";
-    if (output.grain_eaten_by_rats > 0) {
-        std::cout << "THE RATS ATE " << output.grain_eaten_by_rats << " BUSHELS.\n";
+              << "YOU HARVESTED " << game.GrainFromAcre() << " BUSHELS PER ACRE.\n";
+    if (game.GrainEatenByRats() > 0) {
+        std::cout << "THE RATS ATE " << game.GrainEatenByRats() << " BUSHELS.\n";
     }
     std::cout << "YOU NOW HAVE " << game.Grain() << " BUSHELS IN STORE.\n"
               << "LAND IS TRADING AT " << game.AcrePrice() << " BUSHELS PER ACRE.\n";
 }
 
 void PrintEndStatistics(const hamurabi::EndStatistics statistics) {
-    std::cout << "IN YOUR 10-YEAR TERM OF OFFICE, " << statistics.average_dead_percent << " PERCENT OF THE\n"
+    std::cout << "IN YOUR 10-YEAR TERM OF OFFICE, " << statistics.AverageDeadPercent() << " PERCENT OF THE\n"
               << "POPULATION STARVED PER YEAR ON THE AVERAGE, I.E. A TOTAL OF\n"
-              << statistics.dead_citizens << " PEOPLE DIED!!\n"
+              << statistics.Dead() << " PEOPLE DIED!!\n"
               << "YOU STARTED WITH 10 ACRES PER PERSON AND ENDED WITH\n"
-              << statistics.area_by_person << " ACRES PER PERSON\n";
+              << statistics.AreaByPerson() << " ACRES PER PERSON\n";
 
     using Rank = hamurabi::EndStatistics::Rank;
     switch (statistics.CalculateRank()) {
@@ -212,7 +212,7 @@ int main() {
     hamurabi::Game game{generator};
 
     PrintGreetings();
-    PrintRoundOutput(hamurabi::RoundOutput{}, game);
+    PrintGameState(game);
 
     auto can_play = true;
     while (can_play) {
@@ -227,8 +227,8 @@ int main() {
                 PrintEndStatistics(statistics);
                 can_play = false;
             },
-            [&game = std::as_const(game)](hamurabi::RoundOutput output) {
-                PrintRoundOutput(output, game);
+            [&game = std::as_const(game)](hamurabi::Continue) {
+                PrintGameState(game);
             },
         }, result);
     }

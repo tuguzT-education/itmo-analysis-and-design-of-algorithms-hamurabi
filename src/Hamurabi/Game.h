@@ -16,7 +16,7 @@ using Bushels = std::uint_fast32_t;
 template<class T>
 class Game;
 
-class NotEnoughArea {
+class NotEnoughArea final {
   public:
     constexpr explicit NotEnoughArea(Acres area) noexcept;
 
@@ -27,7 +27,7 @@ class NotEnoughArea {
     Acres area_;
 };
 
-class NotEnoughGrain {
+class NotEnoughGrain final {
   public:
     constexpr explicit NotEnoughGrain(Bushels grain) noexcept;
 
@@ -38,21 +38,21 @@ class NotEnoughGrain {
     Bushels grain_;
 };
 
-class NotEnoughPeople {
+class NotEnoughPeople final {
   public:
-    constexpr explicit NotEnoughPeople(People people) noexcept;
+    constexpr explicit NotEnoughPeople(People population) noexcept;
 
     [[nodiscard]]
-    constexpr People People() const noexcept;
+    constexpr People Population() const noexcept;
 
   private:
-    hamurabi::People people_;
+    People population_;
 };
 
 class AreaToBuy;
 using AreaToBuyResult = std::variant<AreaToBuy, NotEnoughGrain>;
 
-class AreaToBuy {
+class AreaToBuy final {
   public:
     template<class T>
     constexpr static AreaToBuyResult New(Acres area_to_buy, const Game<T> &game) noexcept;
@@ -68,7 +68,7 @@ class AreaToBuy {
 class AreaToSell;
 using AreaToSellResult = std::variant<AreaToSell, NotEnoughArea>;
 
-class AreaToSell {
+class AreaToSell final {
   public:
     template<class T>
     constexpr static AreaToSellResult New(Acres area_to_sell, const Game<T> &game) noexcept;
@@ -84,7 +84,7 @@ class AreaToSell {
 class GrainToFeed;
 using GrainToFeedResult = std::variant<GrainToFeed, NotEnoughGrain>;
 
-class GrainToFeed {
+class GrainToFeed final {
   public:
     template<class T>
     constexpr static GrainToFeedResult New(Bushels grain_to_feed, const Game<T> &game) noexcept;
@@ -100,7 +100,7 @@ class GrainToFeed {
 class AreaToPlant;
 using AreaToPlantResult = std::variant<AreaToPlant, NotEnoughArea, NotEnoughGrain, NotEnoughPeople>;
 
-class AreaToPlant {
+class AreaToPlant final {
   public:
     template<class T>
     constexpr static AreaToPlantResult New(Acres area_to_plant, const Game<T> &game) noexcept;
@@ -113,22 +113,16 @@ class AreaToPlant {
     Acres area_to_plant_;
 };
 
-struct RoundInput {
+struct RoundInput final {
     AreaToBuy area_to_buy;
     AreaToSell area_to_sell;
     GrainToFeed grain_to_feed;
     AreaToPlant area_to_plant;
 };
 
-struct RoundOutput {
-    People dead_people_count{};
-    People new_people_count{};
-    Bushels grain_from_acre{};
-    Bushels grain_eaten_by_rats{};
-    bool is_plague{};
-};
+struct Continue final {};
 
-class GameOver {
+class GameOver final {
   public:
     constexpr explicit GameOver(People dead) noexcept;
 
@@ -139,24 +133,33 @@ class GameOver {
     People dead_;
 };
 
-struct EndStatistics {
-    const People average_dead_percent;
-    const People dead_citizens;
-    const Acres area_by_person;
+class EndStatistics final {
+  public:
+    constexpr explicit EndStatistics(Acres area, People population, People dead) noexcept;
+
+    [[nodiscard]]
+    constexpr People AverageDeadPercent() const noexcept;
+
+    [[nodiscard]]
+    constexpr People Dead() const noexcept;
+
+    [[nodiscard]]
+    constexpr Acres AreaByPerson() const noexcept;
 
     enum class Rank : std::uint8_t {
         D = 2, C, B, A,
     };
 
-    constexpr explicit EndStatistics(People average_dead_percent,
-                                     People dead_citizens,
-                                     Acres area_by_person) noexcept;
-
     [[nodiscard]]
     constexpr Rank CalculateRank() const noexcept;
+
+  private:
+    People average_dead_percent_;
+    People dead_;
+    Acres area_by_person_;
 };
 
-using RoundResult = std::variant<RoundOutput, GameOver, EndStatistics>;
+using RoundResult = std::variant<Continue, GameOver, EndStatistics>;
 
 template<class T>
 class Game final {
@@ -170,19 +173,34 @@ class Game final {
     explicit Game(T generator);
 
     [[nodiscard]]
-    Round CurrentRound() const noexcept;
+    constexpr Round CurrentRound() const noexcept;
 
     [[nodiscard]]
-    People Population() const noexcept;
+    constexpr People Population() const noexcept;
 
     [[nodiscard]]
-    Acres Area() const noexcept;
+    constexpr Acres Area() const noexcept;
 
     [[nodiscard]]
-    Bushels Grain() const noexcept;
+    constexpr Bushels Grain() const noexcept;
 
     [[nodiscard]]
-    Bushels AcrePrice() const noexcept;
+    constexpr Bushels AcrePrice() const noexcept;
+
+    [[nodiscard]]
+    constexpr People Dead() const noexcept;
+
+    [[nodiscard]]
+    constexpr People Arrived() const noexcept;
+
+    [[nodiscard]]
+    constexpr Bushels GrainFromAcre() const noexcept;
+
+    [[nodiscard]]
+    constexpr Bushels GrainEatenByRats() const noexcept;
+
+    [[nodiscard]]
+    constexpr bool IsPlague() const noexcept;
 
     [[nodiscard("result should be presented to the user")]]
     RoundResult PlayRound(RoundInput input);
@@ -194,10 +212,17 @@ class Game final {
     Bushels grain_;
     Bushels acre_price_;
     People dead_;
+    People dead_in_total_;
+    People arrived_;
+    Bushels grain_from_acre_;
+    Bushels grain_eaten_by_rats_;
+    bool is_plague_;
     T generator_;
 };
 
 namespace detail {
+
+constexpr Round kLastRound = 10;
 
 template<class T>
 [[nodiscard("result of the next call could differ from the current result")]]
@@ -221,9 +246,9 @@ Bushels GenerateGrainEatenByRats(T &generator, const Bushels grain_after_harvest
     return (grain_after_harvest * generated_value) / 100;
 }
 
-struct FeedPeopleResult {
-    Bushels grain_left{};
-    People dead{};
+struct FeedPeopleResult final {
+    Bushels grain_left{0};
+    People dead{0};
 };
 
 [[nodiscard("result is used later to change game state")]]
@@ -233,10 +258,10 @@ constexpr FeedPeopleResult FeedPeople(const People population, const Bushels gra
     const auto needed_grain = population * kGrainPerPerson;
     if (needed_grain > grain_to_feed) {
         const auto dead = (needed_grain - grain_to_feed - 1) / kGrainPerPerson + 1;
-        return {.grain_left = 0, .dead = dead};
+        return {.dead = dead};
     }
     const auto grain_left = grain_to_feed - needed_grain;
-    return {.grain_left = grain_left, .dead = 0};
+    return {.grain_left = grain_left};
 }
 
 [[nodiscard("it is important to track if the game is over")]]
@@ -278,10 +303,10 @@ constexpr Bushels NotEnoughGrain::Grain() const noexcept {
     return grain_;
 }
 
-constexpr NotEnoughPeople::NotEnoughPeople(hamurabi::People people) noexcept: people_{people} {}
+constexpr NotEnoughPeople::NotEnoughPeople(People population) noexcept: population_{population} {}
 
-constexpr People NotEnoughPeople::People() const noexcept {
-    return people_;
+constexpr People NotEnoughPeople::Population() const noexcept {
+    return population_;
 }
 
 constexpr GameOver::GameOver(People dead) noexcept: dead_{dead} {}
@@ -290,14 +315,26 @@ constexpr People GameOver::Dead() const noexcept {
     return dead_;
 }
 
-constexpr EndStatistics::EndStatistics(const hamurabi::People average_dead_percent,
-                                       const People dead_citizens,
-                                       const hamurabi::Acres area_by_person) noexcept
-    : average_dead_percent{average_dead_percent},
-      dead_citizens{dead_citizens},
-      area_by_person{area_by_person} {}
+constexpr EndStatistics::EndStatistics(const Acres area, const People population, const People dead) noexcept
+    : average_dead_percent_{dead / detail::kLastRound},
+      dead_{dead},
+      area_by_person_{area / population} {}
+
+constexpr People EndStatistics::AverageDeadPercent() const noexcept {
+    return average_dead_percent_;
+}
+
+constexpr People EndStatistics::Dead() const noexcept {
+    return dead_;
+}
+
+constexpr Acres EndStatistics::AreaByPerson() const noexcept {
+    return area_by_person_;
+}
 
 constexpr EndStatistics::Rank EndStatistics::CalculateRank() const noexcept {
+    const auto average_dead_percent = AverageDeadPercent();
+    const auto area_by_person = AreaByPerson();
     if (average_dead_percent > 33 && area_by_person < 7) {
         return Rank::D;
     }
@@ -382,33 +419,63 @@ Game<T>::Game(T generator): generator_{generator},
                             population_{100},
                             area_{1000},
                             grain_{2800},
-                            dead_{0} {
+                            dead_{0},
+                            dead_in_total_{0},
+                            arrived_{5},
+                            grain_from_acre_{3},
+                            grain_eaten_by_rats_{200},
+                            is_plague_{false} {
     acre_price_ = detail::GenerateAcrePrice(generator_);
 }
 
 template<class T>
-Round Game<T>::CurrentRound() const noexcept {
+constexpr Round Game<T>::CurrentRound() const noexcept {
     return current_round_;
 }
 
 template<class T>
-People Game<T>::Population() const noexcept {
+constexpr People Game<T>::Population() const noexcept {
     return population_;
 }
 
 template<class T>
-Acres Game<T>::Area() const noexcept {
+constexpr Acres Game<T>::Area() const noexcept {
     return area_;
 }
 
 template<class T>
-Bushels Game<T>::Grain() const noexcept {
+constexpr Bushels Game<T>::Grain() const noexcept {
     return grain_;
 }
 
 template<class T>
-Bushels Game<T>::AcrePrice() const noexcept {
+constexpr Bushels Game<T>::AcrePrice() const noexcept {
     return acre_price_;
+}
+
+template<class T>
+constexpr People Game<T>::Dead() const noexcept {
+    return dead_;
+}
+
+template<class T>
+constexpr People Game<T>::Arrived() const noexcept {
+    return arrived_;
+}
+
+template<class T>
+constexpr Bushels Game<T>::GrainFromAcre() const noexcept {
+    return grain_from_acre_;
+}
+
+template<class T>
+constexpr Bushels Game<T>::GrainEatenByRats() const noexcept {
+    return grain_eaten_by_rats_;
+}
+
+template<class T>
+constexpr bool Game<T>::IsPlague() const noexcept {
+    return is_plague_;
 }
 
 template<class T>
