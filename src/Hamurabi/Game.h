@@ -300,25 +300,25 @@ bool GenerateIsPlague(T &generator) {
 
 }
 
-constexpr NotEnoughArea::NotEnoughArea(Acres area) noexcept: area_{area} {}
+constexpr NotEnoughArea::NotEnoughArea(const Acres area) noexcept: area_{area} {}
 
 constexpr Acres NotEnoughArea::Area() const noexcept {
     return area_;
 }
 
-constexpr NotEnoughGrain::NotEnoughGrain(Bushels grain) noexcept: grain_{grain} {}
+constexpr NotEnoughGrain::NotEnoughGrain(const Bushels grain) noexcept: grain_{grain} {}
 
 constexpr Bushels NotEnoughGrain::Grain() const noexcept {
     return grain_;
 }
 
-constexpr NotEnoughPeople::NotEnoughPeople(People population) noexcept: population_{population} {}
+constexpr NotEnoughPeople::NotEnoughPeople(const People population) noexcept: population_{population} {}
 
 constexpr People NotEnoughPeople::Population() const noexcept {
     return population_;
 }
 
-constexpr GameOver::GameOver(People dead_from_hunger) noexcept: dead_from_hunger_{dead_from_hunger} {}
+constexpr GameOver::GameOver(const People dead_from_hunger) noexcept: dead_from_hunger_{dead_from_hunger} {}
 
 constexpr People GameOver::DeadFromHunger() const noexcept {
     return dead_from_hunger_;
@@ -359,7 +359,7 @@ constexpr EndStatistics::Rank EndStatistics::CalculateRank() const noexcept {
 }
 
 template<class T>
-constexpr AreaToBuyResult AreaToBuy::New(Acres area_to_buy, const Game<T> &game) noexcept {
+constexpr AreaToBuyResult AreaToBuy::New(const Acres area_to_buy, const Game<T> &game) noexcept {
     const auto total_price = area_to_buy * game.AcrePrice();
     if (total_price > game.Grain()) {
         return NotEnoughGrain{game.Grain()};
@@ -371,10 +371,10 @@ constexpr AreaToBuy::operator Acres() const noexcept {
     return area_to_buy_;
 }
 
-constexpr AreaToBuy::AreaToBuy(Acres area_to_buy) noexcept: area_to_buy_{area_to_buy} {}
+constexpr AreaToBuy::AreaToBuy(const Acres area_to_buy) noexcept: area_to_buy_{area_to_buy} {}
 
 template<class T>
-constexpr AreaToSellResult AreaToSell::New(Acres area_to_sell, const Game<T> &game) noexcept {
+constexpr AreaToSellResult AreaToSell::New(const Acres area_to_sell, const Game<T> &game) noexcept {
     if (area_to_sell > game.Area()) {
         return NotEnoughArea{game.Area()};
     }
@@ -385,10 +385,10 @@ constexpr AreaToSell::operator Acres() const noexcept {
     return area_to_sell_;
 }
 
-constexpr AreaToSell::AreaToSell(Acres area_to_sell) noexcept: area_to_sell_{area_to_sell} {}
+constexpr AreaToSell::AreaToSell(const Acres area_to_sell) noexcept: area_to_sell_{area_to_sell} {}
 
 template<class T>
-constexpr GrainToFeedResult GrainToFeed::New(Bushels grain_to_feed, const Game<T> &game) noexcept {
+constexpr GrainToFeedResult GrainToFeed::New(const Bushels grain_to_feed, const Game<T> &game) noexcept {
     if (grain_to_feed > game.Grain()) {
         return NotEnoughGrain{game.Grain()};
     }
@@ -399,10 +399,10 @@ constexpr GrainToFeed::operator Bushels() const noexcept {
     return grain_to_feed_;
 }
 
-constexpr GrainToFeed::GrainToFeed(Bushels grain_to_feed) noexcept: grain_to_feed_{grain_to_feed} {}
+constexpr GrainToFeed::GrainToFeed(const Bushels grain_to_feed) noexcept: grain_to_feed_{grain_to_feed} {}
 
 template<class T>
-constexpr AreaToPlantResult AreaToPlant::New(Acres area_to_plant, const Game<T> &game) noexcept {
+constexpr AreaToPlantResult AreaToPlant::New(const Acres area_to_plant, const Game<T> &game) noexcept {
     constexpr Acres kAreaToPlantPerPerson = 10;
 
     if (area_to_plant > game.Area()) {
@@ -421,7 +421,7 @@ constexpr AreaToPlant::operator Acres() const noexcept {
     return area_to_plant_;
 }
 
-constexpr AreaToPlant::AreaToPlant(Acres area_to_plant) noexcept: area_to_plant_{area_to_plant} {}
+constexpr AreaToPlant::AreaToPlant(const Acres area_to_plant) noexcept: area_to_plant_{area_to_plant} {}
 
 template<class T>
 Game<T>::Game(T generator): generator_{generator},
