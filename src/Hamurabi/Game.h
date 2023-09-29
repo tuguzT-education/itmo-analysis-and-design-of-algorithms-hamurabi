@@ -124,24 +124,24 @@ struct Continue final {};
 
 class GameOver final {
   public:
-    constexpr explicit GameOver(People dead) noexcept;
+    constexpr explicit GameOver(People dead_from_hunger) noexcept;
 
     [[nodiscard]]
-    constexpr People Dead() const noexcept;
+    constexpr People DeadFromHunger() const noexcept;
 
   private:
-    People dead_;
+    People dead_from_hunger_;
 };
 
 class EndStatistics final {
   public:
-    constexpr explicit EndStatistics(Acres area, People population, People dead) noexcept;
+    constexpr explicit EndStatistics(Acres area, People population, People dead_from_hunger) noexcept;
 
     [[nodiscard]]
-    constexpr People AverageDeadPercent() const noexcept;
+    constexpr People AverageDeadFromHungerPercent() const noexcept;
 
     [[nodiscard]]
-    constexpr People Dead() const noexcept;
+    constexpr People DeadFromHunger() const noexcept;
 
     [[nodiscard]]
     constexpr Acres AreaByPerson() const noexcept;
@@ -154,8 +154,8 @@ class EndStatistics final {
     constexpr Rank CalculateRank() const noexcept;
 
   private:
-    People average_dead_percent_;
-    People dead_;
+    People average_dead_from_hunger_percent_;
+    People dead_from_hunger_;
     Acres area_by_person_;
 };
 
@@ -188,7 +188,7 @@ class Game final {
     constexpr Bushels AcrePrice() const noexcept;
 
     [[nodiscard]]
-    constexpr People Dead() const noexcept;
+    constexpr People DeadFromHunger() const noexcept;
 
     [[nodiscard]]
     constexpr People Arrived() const noexcept;
@@ -206,23 +206,25 @@ class Game final {
     RoundResult PlayRound(RoundInput input);
 
   private:
-    Round current_round_;
     People population_;
     Acres area_;
     Bushels grain_;
     Bushels acre_price_;
-    People dead_;
-    People dead_in_total_;
+    People dead_from_hunger_;
+    People dead_from_hunger_in_total_;
     People arrived_;
     Bushels grain_from_acre_;
     Bushels grain_eaten_by_rats_;
+    Round current_round_;
     bool is_plague_;
+    bool is_game_over_;
     T generator_;
 };
 
 namespace detail {
 
 constexpr Round kLastRound = 10;
+constexpr Acres kAreaCanPlantWithBushel = 2;
 
 template<class T>
 [[nodiscard("result of the next call could differ from the current result")]]
@@ -244,6 +246,11 @@ Bushels GenerateGrainEatenByRats(T &generator, const Bushels grain_after_harvest
     static std::uniform_int_distribution<Bushels> distribution{0, 7};
     const auto generated_value = distribution(generator);
     return (grain_after_harvest * generated_value) / 100;
+}
+
+[[nodiscard("result is used later to change game state")]]
+constexpr Bushels CountGrainToPlantArea(const Acres area) noexcept {
+    return area / kAreaCanPlantWithBushel;
 }
 
 struct FeedPeopleResult final {
@@ -271,7 +278,9 @@ constexpr bool IsGameOver(const People dead, const People population) noexcept {
 }
 
 [[nodiscard("result is used later to change game state")]]
-constexpr People CountNewPeople(const People dead, const Bushels harvested_from_acre, const Bushels grain) noexcept {
+constexpr People CountArrivedPeople(const People dead,
+                                    const Bushels harvested_from_acre,
+                                    const Bushels grain) noexcept {
     const auto dead_s = static_cast<std::int_fast32_t>(dead);
     const auto harvested_from_acre_s = static_cast<std::int_fast32_t>(harvested_from_acre);
     const auto grain_s = static_cast<std::int_fast32_t>(grain);
@@ -309,23 +318,25 @@ constexpr People NotEnoughPeople::Population() const noexcept {
     return population_;
 }
 
-constexpr GameOver::GameOver(People dead) noexcept: dead_{dead} {}
+constexpr GameOver::GameOver(People dead_from_hunger) noexcept: dead_from_hunger_{dead_from_hunger} {}
 
-constexpr People GameOver::Dead() const noexcept {
-    return dead_;
+constexpr People GameOver::DeadFromHunger() const noexcept {
+    return dead_from_hunger_;
 }
 
-constexpr EndStatistics::EndStatistics(const Acres area, const People population, const People dead) noexcept
-    : average_dead_percent_{dead / detail::kLastRound},
-      dead_{dead},
+constexpr EndStatistics::EndStatistics(const Acres area,
+                                       const People population,
+                                       const People dead_from_hunger) noexcept
+    : average_dead_from_hunger_percent_{dead_from_hunger / detail::kLastRound},
+      dead_from_hunger_{dead_from_hunger},
       area_by_person_{area / population} {}
 
-constexpr People EndStatistics::AverageDeadPercent() const noexcept {
-    return average_dead_percent_;
+constexpr People EndStatistics::AverageDeadFromHungerPercent() const noexcept {
+    return average_dead_from_hunger_percent_;
 }
 
-constexpr People EndStatistics::Dead() const noexcept {
-    return dead_;
+constexpr People EndStatistics::DeadFromHunger() const noexcept {
+    return dead_from_hunger_;
 }
 
 constexpr Acres EndStatistics::AreaByPerson() const noexcept {
@@ -333,7 +344,7 @@ constexpr Acres EndStatistics::AreaByPerson() const noexcept {
 }
 
 constexpr EndStatistics::Rank EndStatistics::CalculateRank() const noexcept {
-    const auto average_dead_percent = AverageDeadPercent();
+    const auto average_dead_percent = AverageDeadFromHungerPercent();
     const auto area_by_person = AreaByPerson();
     if (average_dead_percent > 33 && area_by_person < 7) {
         return Rank::D;
@@ -392,13 +403,12 @@ constexpr GrainToFeed::GrainToFeed(Bushels grain_to_feed) noexcept: grain_to_fee
 
 template<class T>
 constexpr AreaToPlantResult AreaToPlant::New(Acres area_to_plant, const Game<T> &game) noexcept {
-    constexpr Acres kAreaCanPlantWithBushel = 2;
     constexpr Acres kAreaToPlantPerPerson = 10;
 
     if (area_to_plant > game.Area()) {
         return NotEnoughArea{game.Area()};
     }
-    if (area_to_plant > game.Grain() * kAreaCanPlantWithBushel) {
+    if (area_to_plant > game.Grain() * detail::kAreaCanPlantWithBushel) {
         return NotEnoughGrain{game.Grain()};
     }
     if (area_to_plant > game.Population() * kAreaToPlantPerPerson) {
@@ -419,12 +429,13 @@ Game<T>::Game(T generator): generator_{generator},
                             population_{100},
                             area_{1000},
                             grain_{2800},
-                            dead_{0},
-                            dead_in_total_{0},
+                            dead_from_hunger_{0},
+                            dead_from_hunger_in_total_{0},
                             arrived_{5},
                             grain_from_acre_{3},
                             grain_eaten_by_rats_{200},
-                            is_plague_{false} {
+                            is_plague_{false},
+                            is_game_over_{false} {
     acre_price_ = detail::GenerateAcrePrice(generator_);
 }
 
@@ -454,8 +465,8 @@ constexpr Bushels Game<T>::AcrePrice() const noexcept {
 }
 
 template<class T>
-constexpr People Game<T>::Dead() const noexcept {
-    return dead_;
+constexpr People Game<T>::DeadFromHunger() const noexcept {
+    return dead_from_hunger_;
 }
 
 template<class T>
@@ -480,8 +491,59 @@ constexpr bool Game<T>::IsPlague() const noexcept {
 
 template<class T>
 RoundResult Game<T>::PlayRound(const RoundInput input) {
-    // TODO return result
-    return GameOver{population_};
+    if (is_game_over_) {
+        return GameOver{dead_from_hunger_};
+    }
+    if (current_round_ > detail::kLastRound) {
+        return EndStatistics{area_, population_, dead_from_hunger_in_total_};
+    }
+    current_round_ += 1;
+
+    const auto area_to_buy = static_cast<Acres>(input.area_to_buy);
+    area_ += area_to_buy;
+    const Bushels grain_to_buy_area = area_to_buy * acre_price_;
+    grain_ -= grain_to_buy_area;
+
+    const auto area_to_sell = static_cast<Acres>(input.area_to_sell);
+    area_ -= area_to_sell;
+    const Bushels grain_to_sell_area = area_to_sell * acre_price_;
+    grain_ += grain_to_sell_area;
+
+    const auto area_to_plant = static_cast<Acres>(input.area_to_plant);
+    grain_from_acre_ = detail::GenerateGrainHarvestedFromAcre(generator_);
+    const Bushels grain_harvested = area_to_plant * grain_from_acre_;
+    grain_ += grain_harvested;
+    const Bushels grain_to_plant_area = detail::CountGrainToPlantArea(area_to_plant);
+    grain_ -= grain_to_plant_area;
+
+    const auto grain_to_feed = static_cast<Bushels>(input.grain_to_feed);
+    const auto feed_people_result = detail::FeedPeople(population_, grain_to_feed);
+    grain_ += feed_people_result.grain_left;
+    grain_ -= grain_to_feed;
+    dead_from_hunger_ = feed_people_result.dead;
+    if (detail::IsGameOver(dead_from_hunger_, population_)) {
+        is_game_over_ = true;
+        return GameOver{dead_from_hunger_};
+    }
+    population_ -= dead_from_hunger_;
+    dead_from_hunger_in_total_ += dead_from_hunger_;
+
+    grain_eaten_by_rats_ = detail::GenerateGrainEatenByRats(generator_, grain_);
+    grain_ -= grain_eaten_by_rats_;
+
+    arrived_ = detail::CountArrivedPeople(dead_from_hunger_, grain_from_acre_, grain_);
+    population_ += arrived_;
+
+    is_plague_ = detail::GenerateIsPlague(generator_);
+    if (is_plague_) {
+        population_ /= 2;
+    }
+
+    acre_price_ = detail::GenerateAcrePrice(generator_);
+    if (current_round_ > detail::kLastRound) {
+        return EndStatistics{area_, population_, dead_from_hunger_in_total_};
+    }
+    return Continue{};
 }
 
 }

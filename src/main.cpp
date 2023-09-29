@@ -48,7 +48,7 @@ void PrintNotEnoughPeople(const hamurabi::NotEnoughPeople error) {
 }
 
 void PrintGameOver(const hamurabi::GameOver game_over) {
-    std::cout << "YOU STARVED " << game_over.Dead() << " PEOPLE IN ONE YEAR!!!\n"
+    std::cout << "YOU STARVED " << game_over.DeadFromHunger() << " PEOPLE IN ONE YEAR!!!\n"
               << "DUE TO THIS EXTREME MISMANAGEMENT YOU HAVE NOT ONLY\n"
                  "BEEN IMPEACHED AND THROWN OUT OF OFFICE BUT YOU HAVE\n"
                  "ALSO BEEN DECLARED NATIONAL FINK!!!!\n";
@@ -148,11 +148,11 @@ template<class T>
 void PrintGameState(const hamurabi::Game<T> &game) {
     std::cout << "HAMURABI:  I BEG TO REPORT TO YOU,\n"
                  "IN YEAR " << game.CurrentRound() << ",";
-    if (game.Dead() > 0) {
-        std::cout << " " << game.Dead() << " PEOPLE STARVED,";
+    if (game.DeadFromHunger() > 0) {
+        std::cout << " " << game.DeadFromHunger() << " PEOPLE STARVED,";
     }
     if (game.Arrived() > 0) {
-        std::cout << " " << game.Arrived() << " CAME TO THE CITY,";
+        std::cout << " " << game.Arrived() << " PEOPLE CAME TO THE CITY,";
     }
     std::cout << "\n";
 
@@ -170,9 +170,9 @@ void PrintGameState(const hamurabi::Game<T> &game) {
 }
 
 void PrintEndStatistics(const hamurabi::EndStatistics statistics) {
-    std::cout << "IN YOUR 10-YEAR TERM OF OFFICE, " << statistics.AverageDeadPercent() << " PERCENT OF THE\n"
+    std::cout << "IN YOUR 10-YEAR TERM OF OFFICE, " << statistics.AverageDeadFromHungerPercent() << " PERCENT OF THE\n"
               << "POPULATION STARVED PER YEAR ON THE AVERAGE, I.E. A TOTAL OF\n"
-              << statistics.Dead() << " PEOPLE DIED!!\n"
+              << statistics.DeadFromHunger() << " PEOPLE DIED!!\n"
               << "YOU STARTED WITH 10 ACRES PER PERSON AND ENDED WITH\n"
               << statistics.AreaByPerson() << " ACRES PER PERSON\n";
 
