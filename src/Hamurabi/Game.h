@@ -520,13 +520,14 @@ RoundResult Game<T>::PlayRound(const RoundInput input) {
     const auto feed_people_result = detail::FeedPeople(population_, grain_to_feed);
     grain_ += feed_people_result.grain_left;
     grain_ -= grain_to_feed;
+    const auto old_population = population_;
     dead_from_hunger_ = feed_people_result.dead;
-    if (detail::IsGameOver(dead_from_hunger_, population_)) {
+    population_ -= dead_from_hunger_;
+    dead_from_hunger_in_total_ += dead_from_hunger_;
+    if (detail::IsGameOver(dead_from_hunger_, old_population)) {
         is_game_over_ = true;
         return GameOver{dead_from_hunger_};
     }
-    population_ -= dead_from_hunger_;
-    dead_from_hunger_in_total_ += dead_from_hunger_;
 
     grain_eaten_by_rats_ = detail::GenerateGrainEatenByRats(generator_, grain_);
     grain_ -= grain_eaten_by_rats_;
