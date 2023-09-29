@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <string_view>
-#include <optional>
 
 void PrintGreetings() {
     std::cout << "                                HAMURABI\n"
@@ -66,7 +65,7 @@ template<class T>
 hamurabi::AreaToBuy ReceiveAreaToBuy(const hamurabi::Game<T> &game) {
     hamurabi::Acres input;
     std::optional<hamurabi::AreaToBuyResult> result;
-    auto try_again = true;
+    bool try_again = true;
     while (try_again) {
         input = ReceiveUnsigned<decltype(input)>("HOW MANY ACRES DO YOU WISH TO BUY? ");
         result = hamurabi::AreaToBuy::New(input, game);
@@ -82,7 +81,7 @@ template<class T>
 hamurabi::AreaToSell ReceiveAreaToSell(const hamurabi::Game<T> &game) {
     hamurabi::Acres input;
     std::optional<hamurabi::AreaToSellResult> result;
-    auto try_again = true;
+    bool try_again = true;
     while (try_again) {
         input = ReceiveUnsigned<decltype(input)>("HOW MANY ACRES DO YOU WISH TO SELL? ");
         result = hamurabi::AreaToSell::New(input, game);
@@ -98,7 +97,7 @@ template<class T>
 hamurabi::GrainToFeed ReceiveGrainToFeed(const hamurabi::Game<T> &game) {
     hamurabi::Bushels input;
     std::optional<hamurabi::GrainToFeedResult> result;
-    auto try_again = true;
+    bool try_again = true;
     while (try_again) {
         input = ReceiveUnsigned<decltype(input)>("HOW MANY BUSHELS DO YOU WISH TO FEED YOUR PEOPLE? ");
         result = hamurabi::GrainToFeed::New(input, game);
@@ -114,7 +113,7 @@ template<class T>
 hamurabi::AreaToPlant ReceiveAreaToPlant(const hamurabi::Game<T> &game) {
     hamurabi::Acres input;
     std::optional<hamurabi::AreaToPlantResult> result;
-    auto try_again = true;
+    bool try_again = true;
     while (try_again) {
         input = ReceiveUnsigned<decltype(input)>("HOW MANY ACRES DO YOU WISH TO PLANT WITH SEED? ");
         result = hamurabi::AreaToPlant::New(input, game);
@@ -169,14 +168,14 @@ void PrintGameState(const hamurabi::Game<T> &game) {
               << "LAND IS TRADING AT " << game.AcrePrice() << " BUSHELS PER ACRE.\n";
 }
 
-void PrintEndStatistics(const hamurabi::EndStatistics statistics) {
+void PrintGameStatistics(const hamurabi::GameStatistics statistics) {
     std::cout << "IN YOUR 10-YEAR TERM OF OFFICE, " << statistics.AverageDeadFromHungerPercent() << " PERCENT OF THE\n"
               << "POPULATION STARVED PER YEAR ON THE AVERAGE, I.E. A TOTAL OF\n"
               << statistics.DeadFromHunger() << " PEOPLE DIED!!\n"
               << "YOU STARTED WITH 10 ACRES PER PERSON AND ENDED WITH\n"
               << statistics.AreaByPerson() << " ACRES PER PERSON\n";
 
-    using Rank = hamurabi::EndStatistics::Rank;
+    using Rank = hamurabi::GameStatistics::Rank;
     switch (statistics.CalculateRank()) {
         case Rank::D: {
             std::cout << "THE PEOPLE (REMAINING) FIND YOU AN UNPLEASANT RULER, AND,\n"
@@ -214,7 +213,7 @@ int main() {
     PrintGreetings();
     PrintGameState(game);
 
-    auto can_play = true;
+    bool can_play = true;
     while (can_play) {
         hamurabi::RoundInput input = ReceiveRoundInput(game);
         hamurabi::RoundResult result = game.PlayRound(input);
@@ -223,12 +222,14 @@ int main() {
                 PrintGameOver(game_over);
                 can_play = false;
             },
-            [&can_play](hamurabi::EndStatistics statistics) {
-                PrintEndStatistics(statistics);
-                can_play = false;
-            },
             [&game = std::as_const(game)](hamurabi::Continue) {
                 PrintGameState(game);
+            },
+            [&can_play, &game = std::as_const(game)](hamurabi::GameEnd) {
+                const auto statistics = game.Statistics().value();
+                PrintGameState(game);
+                PrintGameStatistics(statistics);
+                can_play = false;
             },
         }, result);
     }

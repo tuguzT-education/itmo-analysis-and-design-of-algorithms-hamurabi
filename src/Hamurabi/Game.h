@@ -2,6 +2,7 @@
 #define HAMURABI_GAME_H_
 
 #include <variant>
+#include <optional>
 #include <random>
 #include <algorithm>
 
@@ -120,8 +121,6 @@ struct RoundInput final {
     AreaToPlant area_to_plant;
 };
 
-struct Continue final {};
-
 class GameOver final {
   public:
     constexpr explicit GameOver(People dead_from_hunger) noexcept;
@@ -133,9 +132,13 @@ class GameOver final {
     People dead_from_hunger_;
 };
 
-class EndStatistics final {
+struct Continue final {};
+
+struct GameEnd final {};
+
+class GameStatistics final {
   public:
-    constexpr explicit EndStatistics(Acres area, People population, People dead_from_hunger) noexcept;
+    constexpr explicit GameStatistics(Acres area, People population, People dead_from_hunger) noexcept;
 
     [[nodiscard]]
     constexpr People AverageDeadFromHungerPercent() const noexcept;
@@ -159,7 +162,7 @@ class EndStatistics final {
     Acres area_by_person_;
 };
 
-using RoundResult = std::variant<Continue, GameOver, EndStatistics>;
+using RoundResult = std::variant<Continue, GameOver, GameEnd>;
 
 template<class T>
 class Game final {
@@ -204,6 +207,9 @@ class Game final {
 
     [[nodiscard("result should be presented to the user")]]
     RoundResult PlayRound(RoundInput input);
+
+    [[nodiscard("result should be presented to the user")]]
+    std::optional<GameStatistics> Statistics() const noexcept;
 
   private:
     People population_;
@@ -362,26 +368,26 @@ constexpr People GameOver::DeadFromHunger() const noexcept {
     return dead_from_hunger_;
 }
 
-constexpr EndStatistics::EndStatistics(const Acres area,
-                                       const People population,
-                                       const People dead_from_hunger) noexcept
+constexpr GameStatistics::GameStatistics(const Acres area,
+                                         const People population,
+                                         const People dead_from_hunger) noexcept
     : average_dead_from_hunger_percent_{dead_from_hunger / detail::kLastRound},
       dead_from_hunger_{dead_from_hunger},
       area_by_person_{area / population} {}
 
-constexpr People EndStatistics::AverageDeadFromHungerPercent() const noexcept {
+constexpr People GameStatistics::AverageDeadFromHungerPercent() const noexcept {
     return average_dead_from_hunger_percent_;
 }
 
-constexpr People EndStatistics::DeadFromHunger() const noexcept {
+constexpr People GameStatistics::DeadFromHunger() const noexcept {
     return dead_from_hunger_;
 }
 
-constexpr Acres EndStatistics::AreaByPerson() const noexcept {
+constexpr Acres GameStatistics::AreaByPerson() const noexcept {
     return area_by_person_;
 }
 
-constexpr EndStatistics::Rank EndStatistics::CalculateRank() const noexcept {
+constexpr GameStatistics::Rank GameStatistics::CalculateRank() const noexcept {
     const auto average_dead_percent = AverageDeadFromHungerPercent();
     const auto area_by_person = AreaByPerson();
     if (average_dead_percent > 33 && area_by_person < 7) {
@@ -543,7 +549,7 @@ RoundResult Game<T>::PlayRound(const RoundInput input) {
         return GameOver{dead_from_hunger_};
     }
     if (current_round_ > detail::kLastRound) {
-        return EndStatistics{area_, population_, dead_from_hunger_in_total_};
+        return GameEnd{};
     }
     current_round_ += 1;
 
@@ -590,9 +596,17 @@ RoundResult Game<T>::PlayRound(const RoundInput input) {
 
     acre_price_ = detail::GenerateAcrePrice(generator_);
     if (current_round_ > detail::kLastRound) {
-        return EndStatistics{area_, population_, dead_from_hunger_in_total_};
+        return GameEnd{};
     }
     return Continue{};
+}
+
+template<class T>
+std::optional<GameStatistics> Game<T>::Statistics() const noexcept {
+    if (current_round_ > detail::kLastRound) {
+        return GameStatistics{area_, population_, dead_from_hunger_in_total_};
+    }
+    return {};
 }
 
 }
