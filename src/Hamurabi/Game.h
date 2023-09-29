@@ -224,33 +224,56 @@ class Game final {
 namespace detail {
 
 constexpr Round kLastRound = 10;
-constexpr Acres kAreaCanPlantWithBushel = 2;
+
+constexpr Bushels kMinAcrePrice = 17;
+constexpr Bushels kMaxAcrePrice = 26;
 
 template<class T>
 [[nodiscard("result of the next call could differ from the current result")]]
 Bushels GenerateAcrePrice(T &generator) {
-    static std::uniform_int_distribution<Bushels> distribution{17, 26};
+    static std::uniform_int_distribution<Bushels> distribution{kMinAcrePrice, kMaxAcrePrice};
     return distribution(generator);
 }
+
+constexpr Bushels kMinGrainHarvestedFromAcre = 1;
+constexpr Bushels kMaxGrainHarvestedFromAcre = 6;
 
 template<class T>
 [[nodiscard("result of the next call could differ from the current result")]]
 Bushels GenerateGrainHarvestedFromAcre(T &generator) {
-    static std::uniform_int_distribution<Bushels> distribution{1, 6};
+    static std::uniform_int_distribution<Bushels> distribution{kMinGrainHarvestedFromAcre, kMaxGrainHarvestedFromAcre};
     return distribution(generator);
 }
+
+constexpr Bushels kMinGrainEatenByRatsFactor = 0;
+constexpr Bushels kMaxGrainEatenByRatsFactor = 7;
+constexpr Bushels kGrainEatenByRatsDivisor = 100;
 
 template<class T>
 [[nodiscard("result of the next call could differ from the current result")]]
 Bushels GenerateGrainEatenByRats(T &generator, const Bushels grain_after_harvest) {
-    static std::uniform_int_distribution<Bushels> distribution{0, 7};
+    static std::uniform_int_distribution<Bushels> distribution{kMinGrainEatenByRatsFactor, kMaxGrainEatenByRatsFactor};
     const auto generated_value = distribution(generator);
-    return (grain_after_harvest * generated_value) / 100;
+    return (grain_after_harvest * generated_value) / kGrainEatenByRatsDivisor;
+}
+
+constexpr Acres kAreaCanPlantWithBushel = 2;
+
+[[nodiscard("result is used later to change game state")]]
+constexpr Bushels GrainToPlantArea(const Acres area) noexcept {
+    return area / kAreaCanPlantWithBushel;
 }
 
 [[nodiscard("result is used later to change game state")]]
-constexpr Bushels CountGrainToPlantArea(const Acres area) noexcept {
-    return area / kAreaCanPlantWithBushel;
+constexpr Acres AreaCanPlantWithGrain(const Bushels grain) noexcept {
+    return grain * kAreaCanPlantWithBushel;
+}
+
+constexpr Acres kAreaToPlantPerPerson = 10;
+
+[[nodiscard("result is used later to change game state")]]
+constexpr Acres AreaCanPlantWithPopulation(const People population) noexcept {
+    return population * kAreaToPlantPerPerson;
 }
 
 struct FeedPeopleResult final {
@@ -258,67 +281,82 @@ struct FeedPeopleResult final {
     People dead{0};
 };
 
+constexpr auto kGrainPerPerson = 20;
+
 [[nodiscard("result is used later to change game state")]]
 constexpr FeedPeopleResult FeedPeople(const People population, const Bushels grain_to_feed) noexcept {
-    constexpr auto kGrainPerPerson = 20;
-
     const auto needed_grain = population * kGrainPerPerson;
     if (needed_grain > grain_to_feed) {
         const auto dead = (needed_grain - grain_to_feed - 1) / kGrainPerPerson + 1;
-        return {.dead = dead};
+        return {.grain_left = 0, .dead = dead};
     }
     const auto grain_left = grain_to_feed - needed_grain;
-    return {.grain_left = grain_left};
+    return {.grain_left = grain_left, .dead = 0};
 }
 
+constexpr People kMaxDeadFromHungerPercent = 100;
+constexpr People kMinDeadFromHungerPercentToGameOver = 45;
+
 [[nodiscard("it is important to track if the game is over")]]
-constexpr bool IsGameOver(const People dead, const People population) noexcept {
-    const auto percentage = (dead * 100) / population;
-    return percentage > 45;
+constexpr bool IsGameOver(const People dead_from_hunger, const People population) noexcept {
+    const auto percentage = (dead_from_hunger * kMaxDeadFromHungerPercent) / population;
+    return percentage > kMinDeadFromHungerPercentToGameOver;
 }
+
+using PeopleSigned = std::make_signed_t<People>;
+using BushelsSigned = std::make_signed_t<Bushels>;
+
+constexpr PeopleSigned kMinArrivedPeople = 0;
+constexpr PeopleSigned kMaxArrivedPeople = 50;
 
 [[nodiscard("result is used later to change game state")]]
 constexpr People CountArrivedPeople(const People dead,
                                     const Bushels harvested_from_acre,
                                     const Bushels grain) noexcept {
-    const auto dead_s = static_cast<std::int_fast32_t>(dead);
-    const auto harvested_from_acre_s = static_cast<std::int_fast32_t>(harvested_from_acre);
-    const auto grain_s = static_cast<std::int_fast32_t>(grain);
-    const auto calculation = (dead_s / 2) + ((5 - harvested_from_acre_s) * grain_s / 600) + 1;
-
-    const decltype(calculation) kMinNewPeople = 0;
-    const decltype(calculation) kMaxNewPeople = 50;
-    return std::clamp(calculation, kMinNewPeople, kMaxNewPeople);
+    const auto dead_signed = static_cast<PeopleSigned>(dead);
+    const auto harvested_from_acre_signed = static_cast<BushelsSigned>(harvested_from_acre);
+    const auto grain_signed = static_cast<BushelsSigned>(grain);
+    const auto calculation = (dead_signed / 2) + ((5 - harvested_from_acre_signed) * grain_signed / 600) + 1;
+    const auto clamped = std::clamp(calculation, kMinArrivedPeople, kMaxArrivedPeople);
+    return static_cast<People>(clamped);
 }
+
+constexpr std::uint_fast16_t kMinPlaguePercent = 0;
+constexpr std::uint_fast16_t kMaxPlaguePercent = 100;
+constexpr std::uint_fast16_t kMaxPlagueCanOccurPercent = 15;
 
 template<class T>
 [[nodiscard("result of the next call could differ from the current result")]]
 bool GenerateIsPlague(T &generator) {
-    static std::uniform_int_distribution distribution{0, 100};
-    return distribution(generator) <= 15;
+    static std::uniform_int_distribution distribution{kMinPlaguePercent, kMaxPlaguePercent};
+    return distribution(generator) <= kMaxPlagueCanOccurPercent;
 }
 
 }
 
-constexpr NotEnoughArea::NotEnoughArea(const Acres area) noexcept: area_{area} {}
+constexpr NotEnoughArea::NotEnoughArea(const Acres area) noexcept
+    : area_{area} {}
 
 constexpr Acres NotEnoughArea::Area() const noexcept {
     return area_;
 }
 
-constexpr NotEnoughGrain::NotEnoughGrain(const Bushels grain) noexcept: grain_{grain} {}
+constexpr NotEnoughGrain::NotEnoughGrain(const Bushels grain) noexcept
+    : grain_{grain} {}
 
 constexpr Bushels NotEnoughGrain::Grain() const noexcept {
     return grain_;
 }
 
-constexpr NotEnoughPeople::NotEnoughPeople(const People population) noexcept: population_{population} {}
+constexpr NotEnoughPeople::NotEnoughPeople(const People population) noexcept
+    : population_{population} {}
 
 constexpr People NotEnoughPeople::Population() const noexcept {
     return population_;
 }
 
-constexpr GameOver::GameOver(const People dead_from_hunger) noexcept: dead_from_hunger_{dead_from_hunger} {}
+constexpr GameOver::GameOver(const People dead_from_hunger) noexcept
+    : dead_from_hunger_{dead_from_hunger} {}
 
 constexpr People GameOver::DeadFromHunger() const noexcept {
     return dead_from_hunger_;
@@ -360,9 +398,11 @@ constexpr EndStatistics::Rank EndStatistics::CalculateRank() const noexcept {
 
 template<class T>
 constexpr AreaToBuyResult AreaToBuy::New(const Acres area_to_buy, const Game<T> &game) noexcept {
-    const auto total_price = area_to_buy * game.AcrePrice();
-    if (total_price > game.Grain()) {
-        return NotEnoughGrain{game.Grain()};
+    const auto grain = game.Grain();
+    const auto acre_price = game.AcrePrice();
+    const auto total_price = area_to_buy * acre_price;
+    if (total_price > grain) {
+        return NotEnoughGrain{grain};
     }
     return AreaToBuy{area_to_buy};
 }
@@ -371,12 +411,14 @@ constexpr AreaToBuy::operator Acres() const noexcept {
     return area_to_buy_;
 }
 
-constexpr AreaToBuy::AreaToBuy(const Acres area_to_buy) noexcept: area_to_buy_{area_to_buy} {}
+constexpr AreaToBuy::AreaToBuy(const Acres area_to_buy) noexcept
+    : area_to_buy_{area_to_buy} {}
 
 template<class T>
 constexpr AreaToSellResult AreaToSell::New(const Acres area_to_sell, const Game<T> &game) noexcept {
-    if (area_to_sell > game.Area()) {
-        return NotEnoughArea{game.Area()};
+    const auto area = game.Area();
+    if (area_to_sell > area) {
+        return NotEnoughArea{area};
     }
     return AreaToSell{area_to_sell};
 }
@@ -385,12 +427,14 @@ constexpr AreaToSell::operator Acres() const noexcept {
     return area_to_sell_;
 }
 
-constexpr AreaToSell::AreaToSell(const Acres area_to_sell) noexcept: area_to_sell_{area_to_sell} {}
+constexpr AreaToSell::AreaToSell(const Acres area_to_sell) noexcept
+    : area_to_sell_{area_to_sell} {}
 
 template<class T>
 constexpr GrainToFeedResult GrainToFeed::New(const Bushels grain_to_feed, const Game<T> &game) noexcept {
-    if (grain_to_feed > game.Grain()) {
-        return NotEnoughGrain{game.Grain()};
+    const auto grain = game.Grain();
+    if (grain_to_feed > grain) {
+        return NotEnoughGrain{grain};
     }
     return GrainToFeed{grain_to_feed};
 }
@@ -399,20 +443,22 @@ constexpr GrainToFeed::operator Bushels() const noexcept {
     return grain_to_feed_;
 }
 
-constexpr GrainToFeed::GrainToFeed(const Bushels grain_to_feed) noexcept: grain_to_feed_{grain_to_feed} {}
+constexpr GrainToFeed::GrainToFeed(const Bushels grain_to_feed) noexcept
+    : grain_to_feed_{grain_to_feed} {}
 
 template<class T>
 constexpr AreaToPlantResult AreaToPlant::New(const Acres area_to_plant, const Game<T> &game) noexcept {
-    constexpr Acres kAreaToPlantPerPerson = 10;
-
-    if (area_to_plant > game.Area()) {
-        return NotEnoughArea{game.Area()};
+    const auto area = game.Area();
+    if (area_to_plant > area) {
+        return NotEnoughArea{area};
     }
-    if (area_to_plant > game.Grain() * detail::kAreaCanPlantWithBushel) {
-        return NotEnoughGrain{game.Grain()};
+    const auto grain = game.Grain();
+    if (area_to_plant > detail::AreaCanPlantWithGrain(grain)) {
+        return NotEnoughGrain{grain};
     }
-    if (area_to_plant > game.Population() * kAreaToPlantPerPerson) {
-        return NotEnoughPeople{game.Population()};
+    const auto population = game.Population();
+    if (area_to_plant > detail::AreaCanPlantWithPopulation(population)) {
+        return NotEnoughPeople{population};
     }
     return AreaToPlant{area_to_plant};
 }
@@ -421,21 +467,23 @@ constexpr AreaToPlant::operator Acres() const noexcept {
     return area_to_plant_;
 }
 
-constexpr AreaToPlant::AreaToPlant(const Acres area_to_plant) noexcept: area_to_plant_{area_to_plant} {}
+constexpr AreaToPlant::AreaToPlant(const Acres area_to_plant) noexcept
+    : area_to_plant_{area_to_plant} {}
 
 template<class T>
-Game<T>::Game(T generator): generator_{generator},
-                            current_round_{1},
-                            population_{100},
-                            area_{1000},
-                            grain_{2800},
-                            dead_from_hunger_{0},
-                            dead_from_hunger_in_total_{0},
-                            arrived_{5},
-                            grain_from_acre_{3},
-                            grain_eaten_by_rats_{200},
-                            is_plague_{false},
-                            is_game_over_{false} {
+Game<T>::Game(T generator)
+    : generator_{generator},
+      current_round_{1},
+      population_{100},
+      area_{1000},
+      grain_{2800},
+      dead_from_hunger_{0},
+      dead_from_hunger_in_total_{0},
+      arrived_{5},
+      grain_from_acre_{3},
+      grain_eaten_by_rats_{200},
+      is_plague_{false},
+      is_game_over_{false} {
     acre_price_ = detail::GenerateAcrePrice(generator_);
 }
 
@@ -513,7 +561,7 @@ RoundResult Game<T>::PlayRound(const RoundInput input) {
     grain_from_acre_ = detail::GenerateGrainHarvestedFromAcre(generator_);
     const Bushels grain_harvested = area_to_plant * grain_from_acre_;
     grain_ += grain_harvested;
-    const Bushels grain_to_plant_area = detail::CountGrainToPlantArea(area_to_plant);
+    const Bushels grain_to_plant_area = detail::GrainToPlantArea(area_to_plant);
     grain_ -= grain_to_plant_area;
 
     const auto grain_to_feed = static_cast<Bushels>(input.grain_to_feed);
