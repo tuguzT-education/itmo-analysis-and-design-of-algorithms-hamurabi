@@ -1,5 +1,5 @@
-#ifndef HAMURABI_RESOURCES_H_
-#define HAMURABI_RESOURCES_H_
+#ifndef HAMURABI_RESOURCES
+#define HAMURABI_RESOURCES
 
 #include <cstdint>
 
@@ -13,4 +13,4 @@ using Bushels = std::uint_fast32_t;
 
 }
 
-#endif //HAMURABI_RESOURCES_H_
+#endif //HAMURABI_RESOURCES

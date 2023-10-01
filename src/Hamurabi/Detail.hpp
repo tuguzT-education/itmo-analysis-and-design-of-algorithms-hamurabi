@@ -1,10 +1,10 @@
-#ifndef HAMURABI_DETAIL_H_
-#define HAMURABI_DETAIL_H_
+#ifndef HAMURABI_DETAIL
+#define HAMURABI_DETAIL
 
 #include <random>
 #include <algorithm>
 
-#include "Resources.h"
+#include "Resources.hpp"
 
 namespace hamurabi::detail {
 
@@ -120,4 +120,4 @@ bool GenerateIsPlague(T &generator) {
 
 }
 
-#endif //HAMURABI_DETAIL_H_
+#endif //HAMURABI_DETAIL

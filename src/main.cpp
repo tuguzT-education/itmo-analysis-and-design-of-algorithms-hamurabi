@@ -1,7 +1,7 @@
-#include "Hamurabi/Game.h"
-
 #include <iostream>
 #include <string_view>
+
+#include "Hamurabi/Game.hpp"
 
 void PrintGreetings() {
     std::cout << "                                HAMURABI\n"
@@ -173,7 +173,7 @@ void PrintGameState(const hamurabi::Game<T> &game) {
               << "LAND IS TRADING AT " << game.AcrePrice() << " BUSHELS PER ACRE.\n";
 }
 
-void PrintGameStatistics(const hamurabi::GameStatistics statistics) {
+void PrintGameStatistics(const hamurabi::Statistics statistics) {
     std::cout << "IN YOUR 10-YEAR TERM OF OFFICE, " << statistics.AverageDeadFromHungerPercent() << " PERCENT OF THE\n"
               << "POPULATION STARVED PER YEAR ON THE AVERAGE, I.E. A TOTAL OF\n"
               << statistics.DeadFromHunger() << " PEOPLE DIED!!\n"
@@ -182,23 +182,23 @@ void PrintGameStatistics(const hamurabi::GameStatistics statistics) {
 
     const auto rank = statistics.Rank();
     switch (rank) {
-        case hamurabi::GameRank::D: {
+        case hamurabi::Rank::D: {
             std::cout << "THE PEOPLE (REMAINING) FIND YOU AN UNPLEASANT RULER, AND,\n"
                          "FRANKLY, HATE YOUR GUTS!\n";
             break;
         }
-        case hamurabi::GameRank::C: {
+        case hamurabi::Rank::C: {
             std::cout << "YOUR HEAVY-HANDED PERFORMANCE SMACKS OF NERO AND IVAN IV.\n";
             break;
         }
-        case hamurabi::GameRank::B: {
+        case hamurabi::Rank::B: {
             std::cout << "YOUR PERFORMANCE COULD HAVE BEEN SOMEWHAT BETTER, BUT\n"
                          "REALLY WASN'T TOO BAD AT ALL. PEOPLE\n"
                          "DEARLY LIKE TO SEE YOU ASSASSINATED BUT WE ALL HAVE OUR\n"
                          "TRIVIAL PROBLEMS.\n";
             break;
         }
-        case hamurabi::GameRank::A: {
+        case hamurabi::Rank::A: {
             std::cout << "A FANTASTIC PERFORMANCE!!! CHARLEMAGNE, DISRAELI, AND\n"
                          "JEFFERSON COMBINED COULD NOT HAVE DONE BETTER!\n";
             break;

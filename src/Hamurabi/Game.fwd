@@ -1,0 +1,11 @@
+#ifndef HAMURABI_GAME_FWRD
+#define HAMURABI_GAME_FWRD
+
+namespace hamurabi {
+
+template<class T>
+class Game;
+
+}
+
+#endif //HAMURABI_GAME_FWRD
