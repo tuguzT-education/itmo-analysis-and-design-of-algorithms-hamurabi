@@ -3,4 +3,4 @@ project(Hamurabi)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(Hamurabi src/main.cpp src/Hamurabi/Game.h)
+add_executable(Hamurabi src/main.cpp src/Hamurabi/Game.h src/Hamurabi/Game_decl.h)
