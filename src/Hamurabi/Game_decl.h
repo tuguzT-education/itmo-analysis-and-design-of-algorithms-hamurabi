@@ -4,13 +4,9 @@
 #include <variant>
 #include <optional>
 
+#include "Resources.h"
+
 namespace hamurabi {
-
-using Round = std::uint_fast32_t;
-
-using People = std::uint_fast32_t;
-using Acres = std::uint_fast32_t;
-using Bushels = std::uint_fast32_t;
 
 template<class T>
 class Game;
