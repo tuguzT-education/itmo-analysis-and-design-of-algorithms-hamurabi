@@ -17,7 +17,8 @@ class Game;
 
 class NotEnoughArea final {
   public:
-    constexpr explicit NotEnoughArea(Acres area) noexcept;
+    template<class T>
+    constexpr explicit NotEnoughArea(const Game<T> &game) noexcept;
 
     [[nodiscard]]
     constexpr Acres Area() const noexcept;
@@ -28,7 +29,8 @@ class NotEnoughArea final {
 
 class NotEnoughGrain final {
   public:
-    constexpr explicit NotEnoughGrain(Bushels grain) noexcept;
+    template<class T>
+    constexpr explicit NotEnoughGrain(const Game<T> &game) noexcept;
 
     [[nodiscard]]
     constexpr Bushels Grain() const noexcept;
@@ -39,7 +41,8 @@ class NotEnoughGrain final {
 
 class NotEnoughPeople final {
   public:
-    constexpr explicit NotEnoughPeople(People population) noexcept;
+    template<class T>
+    constexpr explicit NotEnoughPeople(const Game<T> &game) noexcept;
 
     [[nodiscard]]
     constexpr People Population() const noexcept;
@@ -112,16 +115,46 @@ class AreaToPlant final {
     Acres area_to_plant_;
 };
 
-struct RoundInput final {
-    AreaToBuy area_to_buy;
-    AreaToSell area_to_sell;
-    GrainToFeed grain_to_feed;
-    AreaToPlant area_to_plant;
+class RoundInput;
+using RoundInputResult = std::variant<RoundInput, NotEnoughArea, NotEnoughGrain, NotEnoughPeople>;
+
+class RoundInput final {
+  public:
+    template<class T>
+    constexpr static RoundInputResult New(AreaToBuy area_to_buy,
+                                          AreaToSell area_to_sell,
+                                          GrainToFeed grain_to_feed,
+                                          AreaToPlant area_to_plant,
+                                          const Game<T> &game) noexcept;
+
+    [[nodiscard]]
+    constexpr AreaToBuy AreaToBuy() const;
+
+    [[nodiscard]]
+    constexpr AreaToSell AreaToSell() const;
+
+    [[nodiscard]]
+    constexpr GrainToFeed GrainToFeed() const;
+
+    [[nodiscard]]
+    constexpr AreaToPlant AreaToPlant() const;
+
+  private:
+    constexpr explicit RoundInput(hamurabi::AreaToBuy area_to_buy,
+                                  hamurabi::AreaToSell area_to_sell,
+                                  hamurabi::GrainToFeed grain_to_feed,
+                                  hamurabi::AreaToPlant area_to_plant) noexcept;
+
+    hamurabi::AreaToBuy area_to_buy_;
+    hamurabi::AreaToSell area_to_sell_;
+    hamurabi::GrainToFeed grain_to_feed_;
+    hamurabi::AreaToPlant area_to_plant_;
 };
 
 class GameOver final {
   public:
-    constexpr explicit GameOver(People dead_from_hunger) noexcept;
+    template<class T>
+    constexpr explicit GameOver(const Game<T> &game) noexcept;
 
     [[nodiscard]]
     constexpr People DeadFromHunger() const noexcept;
@@ -134,9 +167,14 @@ struct Continue final {};
 
 struct GameEnd final {};
 
+enum class GameRank : std::uint8_t {
+    D = 2, C, B, A,
+};
+
 class GameStatistics final {
   public:
-    constexpr explicit GameStatistics(Acres area, People population, People dead_from_hunger) noexcept;
+    template<class T>
+    constexpr explicit GameStatistics(const Game<T> &game) noexcept;
 
     [[nodiscard]]
     constexpr People AverageDeadFromHungerPercent() const noexcept;
@@ -147,12 +185,8 @@ class GameStatistics final {
     [[nodiscard]]
     constexpr Acres AreaByPerson() const noexcept;
 
-    enum class Rank : std::uint8_t {
-        D = 2, C, B, A,
-    };
-
     [[nodiscard]]
-    constexpr Rank CalculateRank() const noexcept;
+    constexpr GameRank Rank() const noexcept;
 
   private:
     People average_dead_from_hunger_percent_;
@@ -190,6 +224,9 @@ class Game final {
 
     [[nodiscard]]
     constexpr People DeadFromHunger() const noexcept;
+
+    [[nodiscard]]
+    constexpr People DeadFromHungerInTotal() const noexcept;
 
     [[nodiscard]]
     constexpr People Arrived() const noexcept;

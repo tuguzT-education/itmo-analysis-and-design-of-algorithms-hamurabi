@@ -38,7 +38,7 @@ void PrintNotEnoughArea(const hamurabi::NotEnoughArea error) {
 
 void PrintNotEnoughGrain(const hamurabi::NotEnoughGrain error) {
     std::cout << "HAMURABI: THINK AGAIN. YOU HAVE ONLY\n"
-              << error.Grain() << "BUSHELS OF GRAIN. NOW THEN,\n";
+              << error.Grain() << " BUSHELS OF GRAIN. NOW THEN,\n";
 }
 
 void PrintNotEnoughPeople(const hamurabi::NotEnoughPeople error) {
@@ -129,18 +129,23 @@ hamurabi::AreaToPlant ReceiveAreaToPlant(const hamurabi::Game<T> &game) {
 
 template<class T>
 hamurabi::RoundInput ReceiveRoundInput(const hamurabi::Game<T> &game) {
-    const auto area_to_buy = ReceiveAreaToBuy(game);
-    const auto area_to_sell = ReceiveAreaToSell(game);
-    const auto grain_to_feed = ReceiveGrainToFeed(game);
-    const auto area_to_plant = ReceiveAreaToPlant(game);
+    std::optional<hamurabi::RoundInputResult> result;
+    bool try_again = true;
+    while (try_again) {
+        const auto area_to_buy = ReceiveAreaToBuy(game);
+        const auto area_to_sell = ReceiveAreaToSell(game);
+        const auto grain_to_feed = ReceiveGrainToFeed(game);
+        const auto area_to_plant = ReceiveAreaToPlant(game);
+        result = hamurabi::RoundInput::New(area_to_buy, area_to_sell, grain_to_feed, area_to_plant, game);
+        std::visit(overloaded{
+            [&try_again](hamurabi::RoundInput) { try_again = false; },
+            [](hamurabi::NotEnoughArea error) { PrintNotEnoughArea(error); },
+            [](hamurabi::NotEnoughGrain error) { PrintNotEnoughGrain(error); },
+            [](hamurabi::NotEnoughPeople error) { PrintNotEnoughPeople(error); },
+        }, result.value());
+    }
     std::cout << "\n";
-
-    return hamurabi::RoundInput{
-        .area_to_buy = area_to_buy,
-        .area_to_sell = area_to_sell,
-        .grain_to_feed = grain_to_feed,
-        .area_to_plant = area_to_plant,
-    };
+    return std::get<hamurabi::RoundInput>(result.value());
 }
 
 template<class T>
@@ -158,11 +163,11 @@ void PrintGameState(const hamurabi::Game<T> &game) {
     if (game.IsPlague()) {
         std::cout << "A HORRIBLE PLAGUE STRUCK!  HALF THE PEOPLE DIED.\n";
     }
-    std::cout << "POPULATION IS NOW " << game.Population() << "\n"
-              << "THE CITY NOW OWNS " << game.Area() << " ACRES\n"
+    std::cout << "POPULATION IS NOW " << game.Population() << ".\n"
+              << "THE CITY NOW OWNS " << game.Area() << " ACRES.\n"
               << "YOU HARVESTED " << game.GrainFromAcre() << " BUSHELS PER ACRE.\n";
     if (game.GrainEatenByRats() > 0) {
-        std::cout << "THE RATS ATE " << game.GrainEatenByRats() << " BUSHELS.\n";
+        std::cout << "RATS ATE " << game.GrainEatenByRats() << " BUSHELS.\n";
     }
     std::cout << "YOU NOW HAVE " << game.Grain() << " BUSHELS IN STORE.\n"
               << "LAND IS TRADING AT " << game.AcrePrice() << " BUSHELS PER ACRE.\n";
@@ -175,25 +180,25 @@ void PrintGameStatistics(const hamurabi::GameStatistics statistics) {
               << "YOU STARTED WITH 10 ACRES PER PERSON AND ENDED WITH\n"
               << statistics.AreaByPerson() << " ACRES PER PERSON\n";
 
-    using Rank = hamurabi::GameStatistics::Rank;
-    switch (statistics.CalculateRank()) {
-        case Rank::D: {
+    const auto rank = statistics.Rank();
+    switch (rank) {
+        case hamurabi::GameRank::D: {
             std::cout << "THE PEOPLE (REMAINING) FIND YOU AN UNPLEASANT RULER, AND,\n"
                          "FRANKLY, HATE YOUR GUTS!\n";
             break;
         }
-        case Rank::C: {
+        case hamurabi::GameRank::C: {
             std::cout << "YOUR HEAVY-HANDED PERFORMANCE SMACKS OF NERO AND IVAN IV.\n";
             break;
         }
-        case Rank::B: {
+        case hamurabi::GameRank::B: {
             std::cout << "YOUR PERFORMANCE COULD HAVE BEEN SOMEWHAT BETTER, BUT\n"
                          "REALLY WASN'T TOO BAD AT ALL. PEOPLE\n"
                          "DEARLY LIKE TO SEE YOU ASSASSINATED BUT WE ALL HAVE OUR\n"
                          "TRIVIAL PROBLEMS.\n";
             break;
         }
-        case Rank::A: {
+        case hamurabi::GameRank::A: {
             std::cout << "A FANTASTIC PERFORMANCE!!! CHARLEMAGNE, DISRAELI, AND\n"
                          "JEFFERSON COMBINED COULD NOT HAVE DONE BETTER!\n";
             break;
@@ -207,7 +212,7 @@ void PrintGoodbye() {
 
 int main() {
     std::random_device random_device;
-    std::mt19937 generator{random_device()};
+    std::mt19937_64 generator{random_device()};
     hamurabi::Game game{generator};
 
     PrintGreetings();
