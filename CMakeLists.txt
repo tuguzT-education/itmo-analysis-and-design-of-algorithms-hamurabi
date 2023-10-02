@@ -5,9 +5,9 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_executable(Hamurabi src/main.cpp
         src/Hamurabi/Resources.hpp
-        src/Hamurabi/Detail.hpp
         src/Hamurabi/Continue.hpp
         src/Hamurabi/GameEnd.hpp
+        src/Hamurabi/Detail.hpp src/Hamurabi/Detail.inl
         src/Hamurabi/Game.fwd src/Hamurabi/Game.hpp src/Hamurabi/Game.inl
         src/Hamurabi/NotEnoughArea.hpp src/Hamurabi/NotEnoughArea.inl
         src/Hamurabi/NotEnoughGrain.hpp src/Hamurabi/NotEnoughGrain.inl
