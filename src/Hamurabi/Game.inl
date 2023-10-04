@@ -141,6 +141,44 @@ std::optional<Statistics> Game<T>::Statistics() const noexcept {
     return std::nullopt;
 }
 
+template<class T>
+void InsertGame(std::ostream &ostream, const Game<T> &game) {
+    const auto insert_tag = [&ostream](const auto tag) -> auto & {
+        ostream << detail::kInsertTagIndent << tag << detail::kInsertTagDelim << " ";
+        return ostream;
+    };
+    ostream << detail::kInsertGameTag << detail::kInsertTagDelim << "\n";
+    insert_tag(detail::kInsertCurrentRoundTag) << game.CurrentRound() << "\n";
+    insert_tag(detail::kInsertPopulationTag) << game.Population() << "\n";
+    insert_tag(detail::kInsertAreaTag) << game.Area() << "\n";
+    insert_tag(detail::kInsertGrainTag) << game.Grain() << "\n";
+    insert_tag(detail::kInsertAcrePriceTag) << game.AcrePrice() << "\n";
+    insert_tag(detail::kInsertDeadFromHungerTag) << game.DeadFromHunger() << "\n";
+    insert_tag(detail::kInsertDeadFromHungerInTotalTag) << game.DeadFromHungerInTotal() << "\n";
+    insert_tag(detail::kInsertArrivedTag) << game.Arrived() << "\n";
+    insert_tag(detail::kInsertGrainFromAcreTag) << game.GrainFromAcre() << "\n";
+    insert_tag(detail::kInsertGrainEatenByRatsTag) << game.GrainEatenByRats() << "\n";
+    insert_tag(detail::kInsertIsPlagueTag) << game.IsPlague() << "\n";
+}
+
+template<class T>
+void ExtractGame(std::istream &istream, Game<T> &game) {
+    std::string buffer;
+    buffer.reserve(64);
+
+    detail::ExtractCurrentRound(istream, buffer, game.current_round_);
+    detail::ExtractPopulation(istream, buffer, game.population_);
+    detail::ExtractArea(istream, buffer, game.area_);
+    detail::ExtractGrain(istream, buffer, game.grain_);
+    detail::ExtractAcrePrice(istream, buffer, game.acre_price_);
+    detail::ExtractDeadFromHunger(istream, buffer, game.dead_from_hunger_);
+    detail::ExtractDeadFromHungerInTotal(istream, buffer, game.dead_from_hunger_in_total_);
+    detail::ExtractArrived(istream, buffer, game.arrived_);
+    detail::ExtractGrainFromAcre(istream, buffer, game.grain_from_acre_);
+    detail::ExtractGrainEatenByRats(istream, buffer, game.grain_eaten_by_rats_);
+    detail::ExtractIsPlague(istream, buffer, game.is_plague_);
+}
+
 }
 
 #endif //HAMURABI_GAME_INL

@@ -3,6 +3,8 @@
 
 #include <variant>
 #include <optional>
+#include <istream>
+#include <ostream>
 
 #include "NotEnoughArea.hpp"
 #include "NotEnoughGrain.hpp"
@@ -21,6 +23,12 @@
 namespace hamurabi {
 
 using RoundResult = std::variant<Continue, GameOver, GameEnd>;
+
+template<class T>
+void InsertGame(std::ostream &ostream, const Game<T> &game);
+
+template<class T>
+void ExtractGame(std::istream &istream, Game<T> &game);
 
 template<class T>
 class Game final {
@@ -71,6 +79,10 @@ class Game final {
 
     [[nodiscard("result should be presented to the user")]]
     std::optional<Statistics> Statistics() const noexcept;
+
+    friend void InsertGame<T>(std::ostream &ostream, const Game<T> &game);
+
+    friend void ExtractGame<T>(std::istream &istream, Game<T> &game);
 
   private:
     People population_;
