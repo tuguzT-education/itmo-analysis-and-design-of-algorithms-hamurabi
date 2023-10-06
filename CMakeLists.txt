@@ -19,4 +19,5 @@ add_executable(Hamurabi src/main.cpp
         src/Hamurabi/RoundInput.hpp src/Hamurabi/RoundInput.inl
         src/Hamurabi/GameOver.hpp src/Hamurabi/GameOver.inl
         src/Hamurabi/Statistics.hpp src/Hamurabi/Statistics.inl
+        src/Play/Detail.hpp src/Play/Detail.inl
         src/Play/Hamurabi.hpp src/Play/Hamurabi.inl)
