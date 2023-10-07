@@ -8,31 +8,31 @@
 
 namespace hamurabi::detail {
 
-constexpr Round kLastRound = 10;
+extern const Round kLastRound;
 
-constexpr Bushels kMinAcrePrice = 17;
-constexpr Bushels kMaxAcrePrice = 26;
+extern const Bushels kMinAcrePrice;
+extern const Bushels kMaxAcrePrice;
 
 template<class T>
 [[nodiscard("result of the next call could differ from the current result")]]
 static inline Bushels GenerateAcrePrice(T &generator);
 
-constexpr Bushels kMinGrainHarvestedFromAcre = 1;
-constexpr Bushels kMaxGrainHarvestedFromAcre = 6;
+extern const Bushels kMinGrainHarvestedFromAcre;
+extern const Bushels kMaxGrainHarvestedFromAcre;
 
 template<class T>
 [[nodiscard("result of the next call could differ from the current result")]]
 static inline Bushels GenerateGrainHarvestedFromAcre(T &generator);
 
-constexpr Bushels kMinGrainEatenByRatsFactor = 0;
-constexpr Bushels kMaxGrainEatenByRatsFactor = 7;
-constexpr Bushels kGrainEatenByRatsDivisor = 100;
+extern const Bushels kMinGrainEatenByRatsFactor;
+extern const Bushels kMaxGrainEatenByRatsFactor;
+extern const Bushels kGrainEatenByRatsDivisor;
 
 template<class T>
 [[nodiscard("result of the next call could differ from the current result")]]
 static inline Bushels GenerateGrainEatenByRats(T &generator, Bushels grain_after_harvest);
 
-constexpr Acres kAreaCanPlantWithBushel = 2;
+extern const Acres kAreaCanPlantWithBushel;
 
 [[nodiscard("result is used later to change game state")]]
 constexpr static inline Bushels GrainToPlantArea(Acres area) noexcept;
@@ -40,7 +40,7 @@ constexpr static inline Bushels GrainToPlantArea(Acres area) noexcept;
 [[nodiscard("result is used later to change game state")]]
 constexpr static inline Acres AreaCanPlantWithGrain(Bushels grain) noexcept;
 
-constexpr Acres kAreaToPlantPerPerson = 10;
+extern const Acres kAreaToPlantPerPerson;
 
 [[nodiscard("result is used later to change game state")]]
 constexpr static inline Acres AreaCanPlantWithPopulation(People population) noexcept;
@@ -50,13 +50,13 @@ struct FeedPeopleResult final {
     People dead;
 };
 
-constexpr auto kGrainPerPerson = 20;
+extern const Bushels kGrainPerPerson;
 
 [[nodiscard("result is used later to change game state")]]
 constexpr static inline FeedPeopleResult FeedPeople(People population, Bushels grain_to_feed) noexcept;
 
-constexpr People kMaxDeadFromHungerPercent = 100;
-constexpr People kMinDeadFromHungerPercentToGameOver = 45;
+extern const People kMaxDeadFromHungerPercent;
+extern const People kMinDeadFromHungerPercentToGameOver;
 
 [[nodiscard("it is important to track if the game is over")]]
 constexpr static inline bool IsGameOver(People dead_from_hunger, People population) noexcept;
@@ -65,34 +65,19 @@ using AcresSigned = std::make_signed_t<Acres>;
 using PeopleSigned = std::make_signed_t<People>;
 using BushelsSigned = std::make_signed_t<Bushels>;
 
-constexpr PeopleSigned kMinArrivedPeople = 0;
-constexpr PeopleSigned kMaxArrivedPeople = 50;
+extern const PeopleSigned kMinArrivedPeople;
+extern const PeopleSigned kMaxArrivedPeople;
 
 [[nodiscard("result is used later to change game state")]]
 constexpr static inline People CountArrivedPeople(People dead, Bushels harvested_from_acre, Bushels grain) noexcept;
 
-constexpr std::uint_fast16_t kMinPlaguePercent = 0;
-constexpr std::uint_fast16_t kMaxPlaguePercent = 100;
-constexpr std::uint_fast16_t kMaxPlagueCanOccurPercent = 15;
+extern const std::uint_fast16_t kMinPlaguePercent;
+extern const std::uint_fast16_t kMaxPlaguePercent;
+extern const std::uint_fast16_t kMaxPlagueCanOccurPercent;
 
 template<class T>
 [[nodiscard("result of the next call could differ from the current result")]]
 static inline bool GenerateIsPlague(T &generator);
-
-constexpr auto kInsertTagIndent = "    ";
-constexpr auto kInsertTagDelim = ":";
-constexpr auto kInsertGameTag = "hamurabi";
-constexpr auto kInsertCurrentRoundTag = "current_round";
-constexpr auto kInsertPopulationTag = "population";
-constexpr auto kInsertAreaTag = "area";
-constexpr auto kInsertGrainTag = "grain";
-constexpr auto kInsertAcrePriceTag = "acre_price";
-constexpr auto kInsertDeadFromHungerTag = "dead_from_hunger";
-constexpr auto kInsertDeadFromHungerInTotalTag = "dead_from_hunger_in_total";
-constexpr auto kInsertArrivedTag = "arrived";
-constexpr auto kInsertGrainFromAcreTag = "grain_from_acre";
-constexpr auto kInsertGrainEatenByRatsTag = "grain_eaten_by_rats";
-constexpr auto kInsertIsPlagueTag = "is_plague";
 
 static inline std::string &TrimLeft(std::string &string);
 
@@ -100,53 +85,82 @@ static inline std::string &TrimRight(std::string &string);
 
 static inline std::string &Trim(std::string &string);
 
+using string_literal = const char *;
+
+extern const string_literal kInsertTagDelim;
+
 static inline std::string &ExtractUntilTagDelim(std::istream &istream, std::string &buffer);
 
 namespace ser = hamurabi::serialization;
+
+extern const string_literal kInsertGameTag;
+extern const string_literal kInsertCurrentRoundTag;
 
 [[nodiscard]]
 static inline ser::ExtractResult ExtractCurrentRound(std::istream &istream, std::string &buffer,
                                                      Round &current_round, ser::Format format);
 
+extern const string_literal kInsertPopulationTag;
+
 [[nodiscard]]
 static inline ser::ExtractResult ExtractPopulation(std::istream &istream, std::string &buffer,
                                                    People &population, ser::Format format);
+
+extern const string_literal kInsertAreaTag;
 
 [[nodiscard]]
 static inline ser::ExtractResult ExtractArea(std::istream &istream, std::string &buffer,
                                              Acres &area, ser::Format format);
 
+extern const string_literal kInsertGrainTag;
+
 [[nodiscard]]
 static inline ser::ExtractResult ExtractGrain(std::istream &istream, std::string &buffer,
                                               Bushels &grain, ser::Format format);
+
+extern const string_literal kInsertAcrePriceTag;
 
 [[nodiscard]]
 static inline ser::ExtractResult ExtractAcrePrice(std::istream &istream, std::string &buffer,
                                                   Bushels &acre_price, ser::Format format);
 
+extern const string_literal kInsertDeadFromHungerTag;
+
 [[nodiscard]]
 static inline ser::ExtractResult ExtractDeadFromHunger(std::istream &istream, std::string &buffer,
                                                        People &dead_from_hunger, ser::Format format);
+
+extern const string_literal kInsertDeadFromHungerInTotalTag;
 
 [[nodiscard]]
 static inline ser::ExtractResult ExtractDeadFromHungerInTotal(std::istream &istream, std::string &buffer,
                                                               People &dead_in_total, ser::Format format);
 
+extern const string_literal kInsertArrivedTag;
+
 [[nodiscard]]
 static inline ser::ExtractResult ExtractArrived(std::istream &istream, std::string &buffer,
                                                 People &arrived, ser::Format format);
+
+extern const string_literal kInsertGrainFromAcreTag;
 
 [[nodiscard]]
 static inline ser::ExtractResult ExtractGrainFromAcre(std::istream &istream, std::string &buffer,
                                                       Bushels &grain_from_acre, ser::Format format);
 
+extern const string_literal kInsertGrainEatenByRatsTag;
+
 [[nodiscard]]
 static inline ser::ExtractResult ExtractGrainEatenByRats(std::istream &istream, std::string &buffer,
                                                          Bushels &grain_eaten_by_rats, ser::Format format);
 
+extern const string_literal kInsertIsPlagueTag;
+
 [[nodiscard]]
 static inline ser::ExtractResult ExtractIsPlague(std::istream &istream, std::string &buffer,
                                                  bool &is_plague, ser::Format format);
+
+extern const string_literal kInsertTagIndent;
 
 }
 

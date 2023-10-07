@@ -6,11 +6,19 @@
 
 namespace hamurabi::detail {
 
+constexpr Round kLastRound = 10;
+
+constexpr Bushels kMinAcrePrice = 17;
+constexpr Bushels kMaxAcrePrice = 26;
+
 template<class T>
 Bushels GenerateAcrePrice(T &generator) {
     static std::uniform_int_distribution<Bushels> distribution{kMinAcrePrice, kMaxAcrePrice};
     return distribution(generator);
 }
+
+constexpr Bushels kMinGrainHarvestedFromAcre = 1;
+constexpr Bushels kMaxGrainHarvestedFromAcre = 6;
 
 template<class T>
 Bushels GenerateGrainHarvestedFromAcre(T &generator) {
@@ -18,12 +26,18 @@ Bushels GenerateGrainHarvestedFromAcre(T &generator) {
     return distribution(generator);
 }
 
+constexpr Bushels kMinGrainEatenByRatsFactor = 0;
+constexpr Bushels kMaxGrainEatenByRatsFactor = 7;
+constexpr Bushels kGrainEatenByRatsDivisor = 100;
+
 template<class T>
 Bushels GenerateGrainEatenByRats(T &generator, const Bushels grain_after_harvest) {
     static std::uniform_int_distribution<Bushels> distribution{kMinGrainEatenByRatsFactor, kMaxGrainEatenByRatsFactor};
     const auto generated_value = distribution(generator);
     return (grain_after_harvest * generated_value) / kGrainEatenByRatsDivisor;
 }
+
+constexpr Acres kAreaCanPlantWithBushel = 2;
 
 constexpr Bushels GrainToPlantArea(const Acres area) noexcept {
     return area / kAreaCanPlantWithBushel;
@@ -33,9 +47,13 @@ constexpr Acres AreaCanPlantWithGrain(const Bushels grain) noexcept {
     return grain * kAreaCanPlantWithBushel;
 }
 
+constexpr Acres kAreaToPlantPerPerson = 10;
+
 constexpr Acres AreaCanPlantWithPopulation(const People population) noexcept {
     return population * kAreaToPlantPerPerson;
 }
+
+constexpr Bushels kGrainPerPerson = 20;
 
 constexpr FeedPeopleResult FeedPeople(const People population, const Bushels grain_to_feed) noexcept {
     const auto needed_grain = population * kGrainPerPerson;
@@ -47,10 +65,16 @@ constexpr FeedPeopleResult FeedPeople(const People population, const Bushels gra
     return {.grain_left = grain_left, .dead = 0};
 }
 
+constexpr People kMaxDeadFromHungerPercent = 100;
+constexpr People kMinDeadFromHungerPercentToGameOver = 45;
+
 constexpr bool IsGameOver(const People dead_from_hunger, const People population) noexcept {
     const auto percentage = (dead_from_hunger * kMaxDeadFromHungerPercent) / population;
     return percentage > kMinDeadFromHungerPercentToGameOver;
 }
+
+constexpr PeopleSigned kMinArrivedPeople = 0;
+constexpr PeopleSigned kMaxArrivedPeople = 50;
 
 constexpr People CountArrivedPeople(const People dead,
                                     const Bushels harvested_from_acre,
@@ -62,6 +86,10 @@ constexpr People CountArrivedPeople(const People dead,
     const auto clamped = std::clamp(calculation, kMinArrivedPeople, kMaxArrivedPeople);
     return static_cast<People>(clamped);
 }
+
+constexpr std::uint_fast16_t kMinPlaguePercent = 0;
+constexpr std::uint_fast16_t kMaxPlaguePercent = 100;
+constexpr std::uint_fast16_t kMaxPlagueCanOccurPercent = 15;
 
 template<class T>
 bool GenerateIsPlague(T &generator) {
@@ -93,12 +121,17 @@ std::string &Trim(std::string &string) {
     return TrimLeft(TrimRight(string));
 }
 
+constexpr string_literal kInsertTagDelim = ":";
+
 std::string &ExtractUntilTagDelim(std::istream &istream, std::string &buffer) {
     buffer.clear();
     std::getline(istream, buffer);
     buffer = buffer.substr(0, buffer.find(detail::kInsertTagDelim, 0));
     return Trim(buffer);
 }
+
+constexpr string_literal kInsertGameTag = "hamurabi";
+constexpr string_literal kInsertCurrentRoundTag = "current_round";
 
 ser::ExtractResult ExtractCurrentRound(std::istream &istream, std::string &buffer,
                                        Round &current_round, [[maybe_unused]] const ser::Format format) {
@@ -111,6 +144,8 @@ ser::ExtractResult ExtractCurrentRound(std::istream &istream, std::string &buffe
     return ser::ExtractResult::Success;
 }
 
+constexpr string_literal kInsertPopulationTag = "population";
+
 ser::ExtractResult ExtractPopulation(std::istream &istream, std::string &buffer,
                                      People &population, [[maybe_unused]] const ser::Format format) {
     const auto has_tag = ExtractUntilTagDelim(istream, buffer) == detail::kInsertPopulationTag;
@@ -120,6 +155,8 @@ ser::ExtractResult ExtractPopulation(std::istream &istream, std::string &buffer,
     istream >> population;
     return ser::ExtractResult::Success;
 }
+
+constexpr string_literal kInsertAreaTag = "area";
 
 ser::ExtractResult ExtractArea(std::istream &istream, std::string &buffer,
                                Acres &area, [[maybe_unused]] const ser::Format format) {
@@ -131,6 +168,8 @@ ser::ExtractResult ExtractArea(std::istream &istream, std::string &buffer,
     return ser::ExtractResult::Success;
 }
 
+constexpr string_literal kInsertGrainTag = "grain";
+
 ser::ExtractResult ExtractGrain(std::istream &istream, std::string &buffer,
                                 Bushels &grain, [[maybe_unused]] const ser::Format format) {
     const auto has_tag = ExtractUntilTagDelim(istream, buffer) == detail::kInsertGrainTag;
@@ -140,6 +179,8 @@ ser::ExtractResult ExtractGrain(std::istream &istream, std::string &buffer,
     istream >> grain;
     return ser::ExtractResult::Success;
 }
+
+constexpr string_literal kInsertAcrePriceTag = "acre_price";
 
 ser::ExtractResult ExtractAcrePrice(std::istream &istream, std::string &buffer,
                                     Bushels &acre_price, [[maybe_unused]] const ser::Format format) {
@@ -151,6 +192,8 @@ ser::ExtractResult ExtractAcrePrice(std::istream &istream, std::string &buffer,
     return ser::ExtractResult::Success;
 }
 
+constexpr string_literal kInsertDeadFromHungerTag = "dead_from_hunger";
+
 ser::ExtractResult ExtractDeadFromHunger(std::istream &istream, std::string &buffer,
                                          People &dead_from_hunger, [[maybe_unused]] const ser::Format format) {
     const auto has_tag = ExtractUntilTagDelim(istream, buffer) == detail::kInsertDeadFromHungerTag;
@@ -160,6 +203,8 @@ ser::ExtractResult ExtractDeadFromHunger(std::istream &istream, std::string &buf
     istream >> dead_from_hunger;
     return ser::ExtractResult::Success;
 }
+
+constexpr string_literal kInsertDeadFromHungerInTotalTag = "dead_from_hunger_in_total";
 
 ser::ExtractResult ExtractDeadFromHungerInTotal(std::istream &istream, std::string &buffer,
                                                 People &dead_in_total, [[maybe_unused]] const ser::Format format) {
@@ -171,6 +216,8 @@ ser::ExtractResult ExtractDeadFromHungerInTotal(std::istream &istream, std::stri
     return ser::ExtractResult::Success;
 }
 
+constexpr string_literal kInsertArrivedTag = "arrived";
+
 ser::ExtractResult ExtractArrived(std::istream &istream, std::string &buffer,
                                   People &arrived, [[maybe_unused]] const ser::Format format) {
     bool has_tag = ExtractUntilTagDelim(istream, buffer) == detail::kInsertArrivedTag;
@@ -180,6 +227,8 @@ ser::ExtractResult ExtractArrived(std::istream &istream, std::string &buffer,
     istream >> arrived;
     return ser::ExtractResult::Success;
 }
+
+constexpr string_literal kInsertGrainFromAcreTag = "grain_from_acre";
 
 ser::ExtractResult ExtractGrainFromAcre(std::istream &istream, std::string &buffer,
                                         Bushels &grain_from_acre, [[maybe_unused]] const ser::Format format) {
@@ -191,6 +240,8 @@ ser::ExtractResult ExtractGrainFromAcre(std::istream &istream, std::string &buff
     return ser::ExtractResult::Success;
 }
 
+constexpr string_literal kInsertGrainEatenByRatsTag = "grain_eaten_by_rats";
+
 ser::ExtractResult ExtractGrainEatenByRats(std::istream &istream, std::string &buffer,
                                            Bushels &grain_eaten_by_rats, [[maybe_unused]] const ser::Format format) {
     bool has_tag = ExtractUntilTagDelim(istream, buffer) == detail::kInsertGrainEatenByRatsTag;
@@ -201,6 +252,8 @@ ser::ExtractResult ExtractGrainEatenByRats(std::istream &istream, std::string &b
     return ser::ExtractResult::Success;
 }
 
+constexpr string_literal kInsertIsPlagueTag = "is_plague";
+
 ser::ExtractResult ExtractIsPlague(std::istream &istream, std::string &buffer,
                                    bool &is_plague, [[maybe_unused]] const ser::Format format) {
     bool has_tag = ExtractUntilTagDelim(istream, buffer) == detail::kInsertIsPlagueTag;
@@ -210,6 +263,8 @@ ser::ExtractResult ExtractIsPlague(std::istream &istream, std::string &buffer,
     istream >> is_plague;
     return ser::ExtractResult::Success;
 }
+
+constexpr string_literal kInsertTagIndent = "    ";
 
 }
 
