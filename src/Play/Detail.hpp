@@ -1,10 +1,6 @@
 #ifndef PLAY_DETAIL
 #define PLAY_DETAIL
 
-#include <istream>
-#include <ostream>
-#include <string_view>
-
 #include "../Hamurabi/Game.hpp"
 
 namespace play::detail {
@@ -26,28 +22,43 @@ void InsertGameStatistics(std::ostream &ostream, hamurabi::Statistics statistics
 
 void InsertGoodbye(std::ostream &ostream);
 
+extern const hamurabi::string_literal kExitCommand;
+
+constexpr bool CanExit(std::string_view string) noexcept;
+
+struct Exit final {};
+
+template<class T>
+using ExitOr = std::variant<Exit, T>;
+
 template<std::unsigned_integral T>
-T ExtractUnsigned(std::istream &istream, std::ostream &ostream, std::string_view message);
+[[nodiscard]]
+ExitOr<T> ExtractUnsigned(std::istream &istream, std::ostream &ostream, std::string_view message);
 
 template<class T>
-hamurabi::AreaToBuy ExtractAreaToBuy(std::istream &istream, std::ostream &ostream,
-                                     const hamurabi::Game<T> &game);
+[[nodiscard]]
+ExitOr<hamurabi::AreaToBuy> ExtractAreaToBuy(std::istream &istream, std::ostream &ostream,
+                                             const hamurabi::Game<T> &game);
 
 template<class T>
-hamurabi::AreaToSell ExtractAreaToSell(std::istream &istream, std::ostream &ostream,
-                                       const hamurabi::Game<T> &game);
+[[nodiscard]]
+ExitOr<hamurabi::AreaToSell> ExtractAreaToSell(std::istream &istream, std::ostream &ostream,
+                                               const hamurabi::Game<T> &game);
 
 template<class T>
-hamurabi::GrainToFeed ExtractGrainToFeed(std::istream &istream, std::ostream &ostream,
-                                         const hamurabi::Game<T> &game);
+[[nodiscard]]
+ExitOr<hamurabi::GrainToFeed> ExtractGrainToFeed(std::istream &istream, std::ostream &ostream,
+                                                 const hamurabi::Game<T> &game);
 
 template<class T>
-hamurabi::AreaToPlant ExtractAreaToPlant(std::istream &istream, std::ostream &ostream,
-                                         const hamurabi::Game<T> &game);
+[[nodiscard]]
+ExitOr<hamurabi::AreaToPlant> ExtractAreaToPlant(std::istream &istream, std::ostream &ostream,
+                                                 const hamurabi::Game<T> &game);
 
 template<class T>
-hamurabi::RoundInput ExtractRoundInput(std::istream &istream, std::ostream &ostream,
-                                       const hamurabi::Game<T> &game);
+[[nodiscard]]
+ExitOr<hamurabi::RoundInput> ExtractRoundInput(std::istream &istream, std::ostream &ostream,
+                                               const hamurabi::Game<T> &game);
 
 }
 

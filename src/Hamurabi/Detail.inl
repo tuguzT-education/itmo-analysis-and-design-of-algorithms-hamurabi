@@ -97,27 +97,27 @@ bool GenerateIsPlague(T &generator) {
     return distribution(generator) <= kMaxPlagueCanOccurPercent;
 }
 
-std::string &TrimLeft(std::string &string) {
-    const auto predicate = [](const auto item) -> bool {
-        return !std::isspace(item);
-    };
+static inline bool TrimPredicate(const char character) noexcept {
+    return !std::isspace(character);
+}
+
+std::string_view TrimLeft(std::string_view string) {
     const auto first = string.begin();
-    const auto last = std::find_if(string.begin(), string.end(), predicate);
-    string.erase(first, last);
+    const auto last = std::find_if(string.begin(), string.end(), TrimPredicate);
+    const auto count = static_cast<std::size_t>(last - first);
+    string.remove_prefix(std::min(count, string.size()));
     return string;
 }
 
-std::string &TrimRight(std::string &string) {
-    const auto predicate = [](const auto item) -> bool {
-        return !std::isspace(item);
-    };
-    const auto first = std::find_if(string.rbegin(), string.rend(), predicate).base();
+std::string_view TrimRight(std::string_view string) {
+    const auto first = std::find_if(string.rbegin(), string.rend(), TrimPredicate).base();
     const auto last = string.end();
-    string.erase(first, last);
+    const auto count = static_cast<std::size_t>(last - first);
+    string.remove_suffix(std::min(count, string.size()));
     return string;
 }
 
-std::string &Trim(std::string &string) {
+std::string_view Trim(const std::string_view string) {
     return TrimLeft(TrimRight(string));
 }
 
@@ -127,7 +127,8 @@ std::string &ExtractUntilTagDelim(std::istream &istream, std::string &buffer) {
     buffer.clear();
     std::getline(istream, buffer);
     buffer = buffer.substr(0, buffer.find(detail::kInsertTagDelim, 0));
-    return Trim(buffer);
+    buffer = Trim(buffer);
+    return buffer;
 }
 
 constexpr string_literal kInsertGameTag = "hamurabi";

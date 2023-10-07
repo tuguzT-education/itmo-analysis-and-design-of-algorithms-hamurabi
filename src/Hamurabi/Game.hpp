@@ -1,10 +1,7 @@
 #ifndef HAMURABI_GAME
 #define HAMURABI_GAME
 
-#include <variant>
 #include <optional>
-#include <istream>
-#include <ostream>
 
 #include "NotEnoughArea.hpp"
 #include "NotEnoughGrain.hpp"

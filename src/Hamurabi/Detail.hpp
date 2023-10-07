@@ -79,13 +79,11 @@ template<class T>
 [[nodiscard("result of the next call could differ from the current result")]]
 static inline bool GenerateIsPlague(T &generator);
 
-static inline std::string &TrimLeft(std::string &string);
+static inline std::string_view TrimLeft(std::string_view string);
 
-static inline std::string &TrimRight(std::string &string);
+static inline std::string_view TrimRight(std::string_view string);
 
-static inline std::string &Trim(std::string &string);
-
-using string_literal = const char *;
+static inline std::string_view Trim(std::string_view string);
 
 extern const string_literal kInsertTagDelim;
 

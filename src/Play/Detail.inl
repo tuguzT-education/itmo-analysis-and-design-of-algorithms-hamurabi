@@ -94,19 +94,34 @@ void InsertGoodbye(std::ostream &ostream) {
     ostream << "\nSO LONG FOR NOW.\n";
 }
 
+constexpr hamurabi::string_literal kExitCommand = "exit";
+
+constexpr bool CanExit(const std::string_view string) noexcept {
+    return hamurabi::detail::Trim(string) == kExitCommand;
+}
+
 template<std::unsigned_integral T>
-T ExtractUnsigned(std::istream &istream, std::ostream &ostream, const std::string_view message) {
+ExitOr<T> ExtractUnsigned(std::istream &istream, std::ostream &ostream, const std::string_view message) {
     const auto error_message = "HAMURABI: I CANNOT DO WHAT YOU WISH.  NOW THEN,\n";
     std::make_signed_t<T> value;
+    std::string buffer;
+
     while (true) {
+        // prints message
         ostream << message;
-        istream >> value;
-        if (istream.fail()) {
-            istream.clear();
-            istream.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        // gets new line and check for exit
+        std::getline(istream, buffer);
+        if (CanExit(buffer)) {
+            return Exit{};
+        }
+        // converts input into integer
+        try {
+            value = std::stoll(buffer);
+        } catch (const std::logic_error &) {
             ostream << error_message;
             continue;
         }
+        // checks for negative values
         if (value < 0) {
             ostream << error_message;
             continue;
@@ -120,19 +135,20 @@ struct overloaded : Ts ... {
     using Ts::operator()...;
 };
 
-template<class... Ts>
-overloaded(Ts...) -> overloaded<Ts...>;
-
 template<class T>
-hamurabi::AreaToBuy ExtractAreaToBuy(std::istream &istream, std::ostream &ostream,
-                                     const hamurabi::Game<T> &game) {
-    hamurabi::Acres input;
+ExitOr<hamurabi::AreaToBuy> ExtractAreaToBuy(std::istream &istream, std::ostream &ostream,
+                                             const hamurabi::Game<T> &game) {
+    ExitOr<hamurabi::Acres> input;
     std::optional<hamurabi::AreaToBuyResult> result;
     bool try_again = true;
     while (try_again) {
-        input = ExtractUnsigned<decltype(input)>(
+        input = ExtractUnsigned<hamurabi::Acres>(
             istream, ostream, "HOW MANY ACRES DO YOU WISH TO BUY? ");
-        result = hamurabi::AreaToBuy::New(input, game);
+        if (std::holds_alternative<Exit>(input)) {
+            return Exit{};
+        }
+        const auto area_to_buy = std::get<hamurabi::Acres>(input);
+        result = hamurabi::AreaToBuy::New(area_to_buy, game);
         std::visit(detail::overloaded{
             [&try_again](hamurabi::AreaToBuy) { try_again = false; },
             [&ostream](hamurabi::NotEnoughGrain error) { InsertNotEnoughGrain(ostream, error); },
@@ -142,15 +158,19 @@ hamurabi::AreaToBuy ExtractAreaToBuy(std::istream &istream, std::ostream &ostrea
 }
 
 template<class T>
-hamurabi::AreaToSell ExtractAreaToSell(std::istream &istream, std::ostream &ostream,
-                                       const hamurabi::Game<T> &game) {
-    hamurabi::Acres input;
+ExitOr<hamurabi::AreaToSell> ExtractAreaToSell(std::istream &istream, std::ostream &ostream,
+                                               const hamurabi::Game<T> &game) {
+    ExitOr<hamurabi::Acres> input;
     std::optional<hamurabi::AreaToSellResult> result;
     bool try_again = true;
     while (try_again) {
-        input = ExtractUnsigned<decltype(input)>(
+        input = ExtractUnsigned<hamurabi::Acres>(
             istream, ostream, "HOW MANY ACRES DO YOU WISH TO SELL? ");
-        result = hamurabi::AreaToSell::New(input, game);
+        if (std::holds_alternative<Exit>(input)) {
+            return Exit{};
+        }
+        const auto area_to_sell = std::get<hamurabi::Acres>(input);
+        result = hamurabi::AreaToSell::New(area_to_sell, game);
         std::visit(detail::overloaded{
             [&try_again](hamurabi::AreaToSell) { try_again = false; },
             [&ostream](hamurabi::NotEnoughArea error) { InsertNotEnoughArea(ostream, error); },
@@ -160,15 +180,19 @@ hamurabi::AreaToSell ExtractAreaToSell(std::istream &istream, std::ostream &ostr
 }
 
 template<class T>
-hamurabi::GrainToFeed ExtractGrainToFeed(std::istream &istream, std::ostream &ostream,
-                                         const hamurabi::Game<T> &game) {
-    hamurabi::Bushels input;
+ExitOr<hamurabi::GrainToFeed> ExtractGrainToFeed(std::istream &istream, std::ostream &ostream,
+                                                 const hamurabi::Game<T> &game) {
+    ExitOr<hamurabi::Bushels> input;
     std::optional<hamurabi::GrainToFeedResult> result;
     bool try_again = true;
     while (try_again) {
-        input = ExtractUnsigned<decltype(input)>(
+        input = ExtractUnsigned<hamurabi::Bushels>(
             istream, ostream, "HOW MANY BUSHELS DO YOU WISH TO FEED YOUR PEOPLE? ");
-        result = hamurabi::GrainToFeed::New(input, game);
+        if (std::holds_alternative<Exit>(input)) {
+            return Exit{};
+        }
+        const auto grain_to_feed = std::get<hamurabi::Bushels>(input);
+        result = hamurabi::GrainToFeed::New(grain_to_feed, game);
         std::visit(detail::overloaded{
             [&try_again](hamurabi::GrainToFeed) { try_again = false; },
             [&ostream](hamurabi::NotEnoughGrain error) { InsertNotEnoughGrain(ostream, error); },
@@ -178,15 +202,19 @@ hamurabi::GrainToFeed ExtractGrainToFeed(std::istream &istream, std::ostream &os
 }
 
 template<class T>
-hamurabi::AreaToPlant ExtractAreaToPlant(std::istream &istream, std::ostream &ostream,
-                                         const hamurabi::Game<T> &game) {
-    hamurabi::Acres input;
+ExitOr<hamurabi::AreaToPlant> ExtractAreaToPlant(std::istream &istream, std::ostream &ostream,
+                                                 const hamurabi::Game<T> &game) {
+    ExitOr<hamurabi::Acres> input;
     std::optional<hamurabi::AreaToPlantResult> result;
     bool try_again = true;
     while (try_again) {
-        input = ExtractUnsigned<decltype(input)>(
+        input = ExtractUnsigned<hamurabi::Acres>(
             istream, ostream, "HOW MANY ACRES DO YOU WISH TO PLANT WITH SEED? ");
-        result = hamurabi::AreaToPlant::New(input, game);
+        if (std::holds_alternative<Exit>(input)) {
+            return Exit{};
+        }
+        const auto area_to_plant = std::get<hamurabi::Acres>(input);
+        result = hamurabi::AreaToPlant::New(area_to_plant, game);
         std::visit(detail::overloaded{
             [&try_again](hamurabi::AreaToPlant) { try_again = false; },
             [&ostream](hamurabi::NotEnoughArea error) { InsertNotEnoughArea(ostream, error); },
@@ -198,15 +226,36 @@ hamurabi::AreaToPlant ExtractAreaToPlant(std::istream &istream, std::ostream &os
 }
 
 template<class T>
-hamurabi::RoundInput ExtractRoundInput(std::istream &istream, std::ostream &ostream,
-                                       const hamurabi::Game<T> &game) {
+ExitOr<hamurabi::RoundInput> ExtractRoundInput(std::istream &istream, std::ostream &ostream,
+                                               const hamurabi::Game<T> &game) {
     std::optional<hamurabi::RoundInputResult> result;
     bool try_again = true;
     while (try_again) {
-        const auto area_to_buy = ExtractAreaToBuy(istream, ostream, game);
-        const auto area_to_sell = ExtractAreaToSell(istream, ostream, game);
-        const auto grain_to_feed = ExtractGrainToFeed(istream, ostream, game);
-        const auto area_to_plant = ExtractAreaToPlant(istream, ostream, game);
+        // if we got area to buy?
+        const auto area_to_buy_or = ExtractAreaToBuy(istream, ostream, game);
+        if (std::holds_alternative<Exit>(area_to_buy_or)) {
+            return Exit{};
+        }
+        const auto area_to_buy = std::get<hamurabi::AreaToBuy>(area_to_buy_or);
+        // if we got area to sell?
+        const auto area_to_sell_or = ExtractAreaToSell(istream, ostream, game);
+        if (std::holds_alternative<Exit>(area_to_sell_or)) {
+            return Exit{};
+        }
+        const auto area_to_sell = std::get<hamurabi::AreaToSell>(area_to_sell_or);
+        // if we got grain to feed our people?
+        const auto grain_to_feed_or = ExtractGrainToFeed(istream, ostream, game);
+        if (std::holds_alternative<Exit>(grain_to_feed_or)) {
+            return Exit{};
+        }
+        const auto grain_to_feed = std::get<hamurabi::GrainToFeed>(grain_to_feed_or);
+        // if we got area to plant our crops to?
+        const auto area_to_plant_or = ExtractAreaToPlant(istream, ostream, game);
+        if (std::holds_alternative<Exit>(area_to_plant_or)) {
+            return Exit{};
+        }
+        const auto area_to_plant = std::get<hamurabi::AreaToPlant>(area_to_plant_or);
+        // checks for round input result
         result = hamurabi::RoundInput::New(area_to_buy, area_to_sell, grain_to_feed, area_to_plant, game);
         std::visit(detail::overloaded{
             [&try_again](hamurabi::RoundInput) { try_again = false; },
