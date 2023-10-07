@@ -6,7 +6,7 @@
 namespace play {
 
 template<class T>
-void Hamurabi(std::istream &istream, std::ostream &ostream, hamurabi::Game<T> game);
+void Hamurabi(std::istream &istream, std::ostream &ostream, hamurabi::Game<T> &game);
 
 }
 

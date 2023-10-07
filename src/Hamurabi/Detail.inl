@@ -95,97 +95,120 @@ std::string &Trim(std::string &string) {
 
 std::string &ExtractUntilTagDelim(std::istream &istream, std::string &buffer) {
     buffer.clear();
-    std::getline(istream, buffer, detail::kInsertTagDelim);
+    std::getline(istream, buffer);
+    buffer = buffer.substr(0, buffer.find(detail::kInsertTagDelim, 0));
     return Trim(buffer);
 }
 
-void ExtractCurrentRound(std::istream &istream, std::string &buffer, Round &current_round) {
+ser::ExtractResult ExtractCurrentRound(std::istream &istream, std::string &buffer,
+                                       Round &current_round, [[maybe_unused]] const ser::Format format) {
     const auto has_game_tag = ExtractUntilTagDelim(istream, buffer) == detail::kInsertGameTag;
     const auto has_tag = ExtractUntilTagDelim(istream, buffer) == detail::kInsertCurrentRoundTag;
     if (!has_game_tag || !has_tag) {
-        return;
+        return ser::ExtractResult::Error;
     }
     istream >> current_round;
+    return ser::ExtractResult::Success;
 }
 
-void ExtractPopulation(std::istream &istream, std::string &buffer, People &population) {
+ser::ExtractResult ExtractPopulation(std::istream &istream, std::string &buffer,
+                                     People &population, [[maybe_unused]] const ser::Format format) {
     const auto has_tag = ExtractUntilTagDelim(istream, buffer) == detail::kInsertPopulationTag;
     if (!has_tag) {
-        return;
+        return ser::ExtractResult::Error;
     }
     istream >> population;
+    return ser::ExtractResult::Success;
 }
 
-void ExtractArea(std::istream &istream, std::string &buffer, Acres &area) {
+ser::ExtractResult ExtractArea(std::istream &istream, std::string &buffer,
+                               Acres &area, [[maybe_unused]] const ser::Format format) {
     const auto has_tag = ExtractUntilTagDelim(istream, buffer) == detail::kInsertAreaTag;
     if (!has_tag) {
-        return;
+        return ser::ExtractResult::Error;
     }
     istream >> area;
+    return ser::ExtractResult::Success;
 }
 
-void ExtractGrain(std::istream &istream, std::string &buffer, Bushels &grain) {
+ser::ExtractResult ExtractGrain(std::istream &istream, std::string &buffer,
+                                Bushels &grain, [[maybe_unused]] const ser::Format format) {
     const auto has_tag = ExtractUntilTagDelim(istream, buffer) == detail::kInsertGrainTag;
     if (!has_tag) {
-        return;
+        return ser::ExtractResult::Error;
     }
     istream >> grain;
+    return ser::ExtractResult::Success;
 }
 
-void ExtractAcrePrice(std::istream &istream, std::string &buffer, Bushels &acre_price) {
+ser::ExtractResult ExtractAcrePrice(std::istream &istream, std::string &buffer,
+                                    Bushels &acre_price, [[maybe_unused]] const ser::Format format) {
     const auto has_tag = ExtractUntilTagDelim(istream, buffer) == detail::kInsertAcrePriceTag;
     if (!has_tag) {
-        return;
+        return ser::ExtractResult::Error;
     }
     istream >> acre_price;
+    return ser::ExtractResult::Success;
 }
 
-void ExtractDeadFromHunger(std::istream &istream, std::string &buffer, People &dead_from_hunger) {
+ser::ExtractResult ExtractDeadFromHunger(std::istream &istream, std::string &buffer,
+                                         People &dead_from_hunger, [[maybe_unused]] const ser::Format format) {
     const auto has_tag = ExtractUntilTagDelim(istream, buffer) == detail::kInsertDeadFromHungerTag;
     if (!has_tag) {
-        return;
+        return ser::ExtractResult::Error;
     }
     istream >> dead_from_hunger;
+    return ser::ExtractResult::Success;
 }
 
-void ExtractDeadFromHungerInTotal(std::istream &istream, std::string &buffer, People &dead_in_total) {
+ser::ExtractResult ExtractDeadFromHungerInTotal(std::istream &istream, std::string &buffer,
+                                                People &dead_in_total, [[maybe_unused]] const ser::Format format) {
     bool has_tag = ExtractUntilTagDelim(istream, buffer) == detail::kInsertDeadFromHungerInTotalTag;
     if (!has_tag) {
-        return;
+        return ser::ExtractResult::Error;
     }
     istream >> dead_in_total;
+    return ser::ExtractResult::Success;
 }
 
-void ExtractArrived(std::istream &istream, std::string &buffer, People &arrived) {
+ser::ExtractResult ExtractArrived(std::istream &istream, std::string &buffer,
+                                  People &arrived, [[maybe_unused]] const ser::Format format) {
     bool has_tag = ExtractUntilTagDelim(istream, buffer) == detail::kInsertArrivedTag;
     if (!has_tag) {
-        return;
+        return ser::ExtractResult::Error;
     }
     istream >> arrived;
+    return ser::ExtractResult::Success;
 }
 
-void ExtractGrainFromAcre(std::istream &istream, std::string &buffer, Bushels &grain_from_acre) {
+ser::ExtractResult ExtractGrainFromAcre(std::istream &istream, std::string &buffer,
+                                        Bushels &grain_from_acre, [[maybe_unused]] const ser::Format format) {
     bool has_tag = ExtractUntilTagDelim(istream, buffer) == detail::kInsertGrainFromAcreTag;
     if (!has_tag) {
-        return;
+        return ser::ExtractResult::Error;
     }
     istream >> grain_from_acre;
+    return ser::ExtractResult::Success;
 }
 
-void ExtractGrainEatenByRats(std::istream &istream, std::string &buffer, Bushels &grain_eaten_by_rats) {
+ser::ExtractResult ExtractGrainEatenByRats(std::istream &istream, std::string &buffer,
+                                           Bushels &grain_eaten_by_rats, [[maybe_unused]] const ser::Format format) {
     bool has_tag = ExtractUntilTagDelim(istream, buffer) == detail::kInsertGrainEatenByRatsTag;
     if (!has_tag) {
-        return;
+        return ser::ExtractResult::Error;
     }
     istream >> grain_eaten_by_rats;
+    return ser::ExtractResult::Success;
 }
 
-void ExtractIsPlague(std::istream &istream, std::string &buffer, bool &is_plague) {
+ser::ExtractResult ExtractIsPlague(std::istream &istream, std::string &buffer,
+                                   bool &is_plague, [[maybe_unused]] const ser::Format format) {
     bool has_tag = ExtractUntilTagDelim(istream, buffer) == detail::kInsertIsPlagueTag;
     if (!has_tag) {
-        return;
+        return ser::ExtractResult::Error;
     }
     istream >> is_plague;
+    return ser::ExtractResult::Success;
 }
 
 }

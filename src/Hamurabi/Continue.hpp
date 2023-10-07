@@ -3,7 +3,7 @@
 
 namespace hamurabi {
 
-struct Continue {};
+struct Continue final {};
 
 }
 

@@ -3,7 +3,7 @@
 
 namespace hamurabi {
 
-struct GameEnd {};
+struct GameEnd final {};
 
 }
 

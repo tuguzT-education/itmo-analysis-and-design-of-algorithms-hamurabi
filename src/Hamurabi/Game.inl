@@ -141,12 +141,15 @@ std::optional<Statistics> Game<T>::Statistics() const noexcept {
     return std::nullopt;
 }
 
+namespace serialization {
+
 template<class T>
-void InsertGame(std::ostream &ostream, const Game<T> &game) {
+void InsertGame(std::ostream &ostream, const Game<T> &game, [[maybe_unused]] const Format format) {
     const auto insert_tag = [&ostream](const auto tag) -> auto & {
         ostream << detail::kInsertTagIndent << tag << detail::kInsertTagDelim << " ";
         return ostream;
     };
+
     ostream << detail::kInsertGameTag << detail::kInsertTagDelim << "\n";
     insert_tag(detail::kInsertCurrentRoundTag) << game.CurrentRound() << "\n";
     insert_tag(detail::kInsertPopulationTag) << game.Population() << "\n";
@@ -162,21 +165,92 @@ void InsertGame(std::ostream &ostream, const Game<T> &game) {
 }
 
 template<class T>
-void ExtractGame(std::istream &istream, Game<T> &game) {
+ExtractResult ExtractGame(std::istream &istream, Game<T> &game, const Format format) {
     std::string buffer;
-    buffer.reserve(64);
 
-    detail::ExtractCurrentRound(istream, buffer, game.current_round_);
-    detail::ExtractPopulation(istream, buffer, game.population_);
-    detail::ExtractArea(istream, buffer, game.area_);
-    detail::ExtractGrain(istream, buffer, game.grain_);
-    detail::ExtractAcrePrice(istream, buffer, game.acre_price_);
-    detail::ExtractDeadFromHunger(istream, buffer, game.dead_from_hunger_);
-    detail::ExtractDeadFromHungerInTotal(istream, buffer, game.dead_from_hunger_in_total_);
-    detail::ExtractArrived(istream, buffer, game.arrived_);
-    detail::ExtractGrainFromAcre(istream, buffer, game.grain_from_acre_);
-    detail::ExtractGrainEatenByRats(istream, buffer, game.grain_eaten_by_rats_);
-    detail::ExtractIsPlague(istream, buffer, game.is_plague_);
+    switch (detail::ExtractCurrentRound(istream, buffer, game.current_round_, format)) {
+        case ExtractResult::Error: {
+            return ExtractResult::Error;
+        }
+        case ExtractResult::Success: {
+            break;
+        }
+    }
+    switch (detail::ExtractPopulation(istream, buffer, game.population_, format)) {
+        case ExtractResult::Error: {
+            return ExtractResult::Error;
+        }
+        case ExtractResult::Success: {
+            break;
+        }
+    }
+    switch (detail::ExtractArea(istream, buffer, game.area_, format)) {
+        case ExtractResult::Error: {
+            return ExtractResult::Error;
+        }
+        case ExtractResult::Success: {
+            break;
+        }
+    }
+    switch (detail::ExtractGrain(istream, buffer, game.grain_, format)) {
+        case ExtractResult::Error: {
+            return ExtractResult::Error;
+        }
+        case ExtractResult::Success: {
+            break;
+        }
+    }
+    switch (detail::ExtractAcrePrice(istream, buffer, game.acre_price_, format)) {
+        case ExtractResult::Error: {
+            return ExtractResult::Error;
+        }
+        case ExtractResult::Success: {
+            break;
+        }
+    }
+    switch (detail::ExtractDeadFromHunger(istream, buffer, game.dead_from_hunger_, format)) {
+        case ExtractResult::Error: {
+            return ExtractResult::Error;
+        }
+        case ExtractResult::Success: {
+            break;
+        }
+    }
+    switch (detail::ExtractDeadFromHungerInTotal(istream, buffer, game.dead_from_hunger_in_total_, format)) {
+        case ExtractResult::Error: {
+            return ExtractResult::Error;
+        }
+        case ExtractResult::Success: {
+            break;
+        }
+    }
+    switch (detail::ExtractArrived(istream, buffer, game.arrived_, format)) {
+        case ExtractResult::Error: {
+            return ExtractResult::Error;
+        }
+        case ExtractResult::Success: {
+            break;
+        }
+    }
+    switch (detail::ExtractGrainFromAcre(istream, buffer, game.grain_from_acre_, format)) {
+        case ExtractResult::Error: {
+            return ExtractResult::Error;
+        }
+        case ExtractResult::Success: {
+            break;
+        }
+    }
+    switch (detail::ExtractGrainEatenByRats(istream, buffer, game.grain_eaten_by_rats_, format)) {
+        case ExtractResult::Error: {
+            return ExtractResult::Error;
+        }
+        case ExtractResult::Success: {
+            break;
+        }
+    }
+    return detail::ExtractIsPlague(istream, buffer, game.is_plague_, format);
+}
+
 }
 
 }

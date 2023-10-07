@@ -4,6 +4,7 @@
 #include <string>
 
 #include "Resources.hpp"
+#include "Serialization.hpp"
 
 namespace hamurabi::detail {
 
@@ -79,7 +80,7 @@ template<class T>
 static inline bool GenerateIsPlague(T &generator);
 
 constexpr auto kInsertTagIndent = "    ";
-constexpr auto kInsertTagDelim = ':';
+constexpr auto kInsertTagDelim = ":";
 constexpr auto kInsertGameTag = "hamurabi";
 constexpr auto kInsertCurrentRoundTag = "current_round";
 constexpr auto kInsertPopulationTag = "population";
@@ -101,27 +102,51 @@ static inline std::string &Trim(std::string &string);
 
 static inline std::string &ExtractUntilTagDelim(std::istream &istream, std::string &buffer);
 
-static inline void ExtractCurrentRound(std::istream &istream, std::string &buffer, Round &current_round);
+namespace ser = hamurabi::serialization;
 
-static inline void ExtractPopulation(std::istream &istream, std::string &buffer, People &population);
+[[nodiscard]]
+static inline ser::ExtractResult ExtractCurrentRound(std::istream &istream, std::string &buffer,
+                                                     Round &current_round, ser::Format format);
 
-static inline void ExtractArea(std::istream &istream, std::string &buffer, Acres &area);
+[[nodiscard]]
+static inline ser::ExtractResult ExtractPopulation(std::istream &istream, std::string &buffer,
+                                                   People &population, ser::Format format);
 
-static inline void ExtractGrain(std::istream &istream, std::string &buffer, Bushels &grain);
+[[nodiscard]]
+static inline ser::ExtractResult ExtractArea(std::istream &istream, std::string &buffer,
+                                             Acres &area, ser::Format format);
 
-static inline void ExtractAcrePrice(std::istream &istream, std::string &buffer, Bushels &acre_price);
+[[nodiscard]]
+static inline ser::ExtractResult ExtractGrain(std::istream &istream, std::string &buffer,
+                                              Bushels &grain, ser::Format format);
 
-static inline void ExtractDeadFromHunger(std::istream &istream, std::string &buffer, People &dead_from_hunger);
+[[nodiscard]]
+static inline ser::ExtractResult ExtractAcrePrice(std::istream &istream, std::string &buffer,
+                                                  Bushels &acre_price, ser::Format format);
 
-static inline void ExtractDeadFromHungerInTotal(std::istream &istream, std::string &buffer, People &dead_in_total);
+[[nodiscard]]
+static inline ser::ExtractResult ExtractDeadFromHunger(std::istream &istream, std::string &buffer,
+                                                       People &dead_from_hunger, ser::Format format);
 
-static inline void ExtractArrived(std::istream &istream, std::string &buffer, People &arrived);
+[[nodiscard]]
+static inline ser::ExtractResult ExtractDeadFromHungerInTotal(std::istream &istream, std::string &buffer,
+                                                              People &dead_in_total, ser::Format format);
 
-static inline void ExtractGrainFromAcre(std::istream &istream, std::string &buffer, Bushels &grain_from_acre);
+[[nodiscard]]
+static inline ser::ExtractResult ExtractArrived(std::istream &istream, std::string &buffer,
+                                                People &arrived, ser::Format format);
 
-static inline void ExtractGrainEatenByRats(std::istream &istream, std::string &buffer, Bushels &grain_eaten_by_rats);
+[[nodiscard]]
+static inline ser::ExtractResult ExtractGrainFromAcre(std::istream &istream, std::string &buffer,
+                                                      Bushels &grain_from_acre, ser::Format format);
 
-static inline void ExtractIsPlague(std::istream &istream, std::string &buffer, bool &is_plague);
+[[nodiscard]]
+static inline ser::ExtractResult ExtractGrainEatenByRats(std::istream &istream, std::string &buffer,
+                                                         Bushels &grain_eaten_by_rats, ser::Format format);
+
+[[nodiscard]]
+static inline ser::ExtractResult ExtractIsPlague(std::istream &istream, std::string &buffer,
+                                                 bool &is_plague, ser::Format format);
 
 }
 
