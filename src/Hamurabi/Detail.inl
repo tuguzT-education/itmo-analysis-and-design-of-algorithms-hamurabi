@@ -6,7 +6,18 @@
 
 namespace hamurabi::detail {
 
+constexpr Round kFirstRound = 1;
 constexpr Round kLastRound = 10;
+
+constexpr People kStartPopulation = 100;
+constexpr Acres kStartArea = 1000;
+constexpr Bushels kStartGrain = 2800;
+constexpr People kStartDeadFromHunger = 0;
+constexpr People kStartArrived = 5;
+constexpr Bushels kStartGrainFromAcre = 3;
+constexpr Bushels kStartGrainEatenByRats = 200;
+constexpr bool kStartIsPlague = false;
+constexpr bool kStartIsGameOver = false;
 
 constexpr Bushels kMinAcrePrice = 17;
 constexpr Bushels kMaxAcrePrice = 26;
@@ -97,11 +108,11 @@ bool GenerateIsPlague(T &generator) {
     return distribution(generator) <= kMaxPlagueCanOccurPercent;
 }
 
-static inline bool TrimPredicate(const char character) noexcept {
+static inline bool TrimPredicate(const unsigned char character) noexcept {
     return !std::isspace(character);
 }
 
-std::string_view TrimLeft(std::string_view string) {
+constexpr std::string_view TrimLeft(std::string_view string) noexcept {
     const auto first = string.begin();
     const auto last = std::find_if(string.begin(), string.end(), TrimPredicate);
     const auto count = static_cast<std::size_t>(last - first);
@@ -109,7 +120,7 @@ std::string_view TrimLeft(std::string_view string) {
     return string;
 }
 
-std::string_view TrimRight(std::string_view string) {
+constexpr std::string_view TrimRight(std::string_view string) noexcept {
     const auto first = std::find_if(string.rbegin(), string.rend(), TrimPredicate).base();
     const auto last = string.end();
     const auto count = static_cast<std::size_t>(last - first);
@@ -117,16 +128,15 @@ std::string_view TrimRight(std::string_view string) {
     return string;
 }
 
-std::string_view Trim(const std::string_view string) {
+constexpr std::string_view Trim(const std::string_view string) noexcept {
     return TrimLeft(TrimRight(string));
 }
 
-constexpr string_literal kInsertTagDelim = ":";
+constexpr char kInsertTagDelim = ':';
 
 std::string &ExtractUntilTagDelim(std::istream &istream, std::string &buffer) {
     buffer.clear();
-    std::getline(istream, buffer);
-    buffer = buffer.substr(0, buffer.find(detail::kInsertTagDelim, 0));
+    std::getline(istream, buffer, detail::kInsertTagDelim);
     buffer = Trim(buffer);
     return buffer;
 }
@@ -261,7 +271,7 @@ ser::ExtractResult ExtractIsPlague(std::istream &istream, std::string &buffer,
     if (!has_tag) {
         return ser::ExtractResult::Error;
     }
-    istream >> is_plague;
+    istream >> std::boolalpha >> is_plague;
     return ser::ExtractResult::Success;
 }
 

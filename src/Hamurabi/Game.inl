@@ -6,17 +6,17 @@ namespace hamurabi {
 template<class T>
 Game<T>::Game(T generator)
     : generator_{generator},
-      current_round_{1},
-      population_{100},
-      area_{1000},
-      grain_{2800},
-      dead_from_hunger_{0},
-      dead_from_hunger_in_total_{0},
-      arrived_{5},
-      grain_from_acre_{3},
-      grain_eaten_by_rats_{200},
-      is_plague_{false},
-      is_game_over_{false} {
+      current_round_{detail::kFirstRound},
+      population_{detail::kStartPopulation},
+      area_{detail::kStartArea},
+      grain_{detail::kStartGrain},
+      dead_from_hunger_{detail::kStartDeadFromHunger},
+      dead_from_hunger_in_total_{detail::kStartDeadFromHunger},
+      arrived_{detail::kStartArrived},
+      grain_from_acre_{detail::kStartGrainFromAcre},
+      grain_eaten_by_rats_{detail::kStartGrainEatenByRats},
+      is_plague_{detail::kStartIsPlague},
+      is_game_over_{detail::kStartIsGameOver} {
     acre_price_ = detail::GenerateAcrePrice(generator_);
 }
 
@@ -161,7 +161,7 @@ void InsertGame(std::ostream &ostream, const Game<T> &game, [[maybe_unused]] con
     insert_tag(detail::kInsertArrivedTag) << game.Arrived() << "\n";
     insert_tag(detail::kInsertGrainFromAcreTag) << game.GrainFromAcre() << "\n";
     insert_tag(detail::kInsertGrainEatenByRatsTag) << game.GrainEatenByRats() << "\n";
-    insert_tag(detail::kInsertIsPlagueTag) << game.IsPlague() << "\n";
+    insert_tag(detail::kInsertIsPlagueTag) << std::boolalpha << game.IsPlague() << "\n";
 }
 
 template<class T>

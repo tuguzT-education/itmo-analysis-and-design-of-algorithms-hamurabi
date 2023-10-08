@@ -8,7 +8,18 @@
 
 namespace hamurabi::detail {
 
+extern const Round kFirstRound;
 extern const Round kLastRound;
+
+extern const People kStartPopulation;
+extern const Acres kStartArea;
+extern const Bushels kStartGrain;
+extern const People kStartDeadFromHunger;
+extern const People kStartArrived;
+extern const Bushels kStartGrainFromAcre;
+extern const Bushels kStartGrainEatenByRats;
+extern const bool kStartIsPlague;
+extern const bool kStartIsGameOver;
 
 extern const Bushels kMinAcrePrice;
 extern const Bushels kMaxAcrePrice;
@@ -79,13 +90,13 @@ template<class T>
 [[nodiscard("result of the next call could differ from the current result")]]
 static inline bool GenerateIsPlague(T &generator);
 
-static inline std::string_view TrimLeft(std::string_view string);
+static inline constexpr std::string_view TrimLeft(std::string_view string) noexcept;
 
-static inline std::string_view TrimRight(std::string_view string);
+static inline constexpr std::string_view TrimRight(std::string_view string) noexcept;
 
-static inline std::string_view Trim(std::string_view string);
+static inline constexpr std::string_view Trim(std::string_view string) noexcept;
 
-extern const string_literal kInsertTagDelim;
+extern const char kInsertTagDelim;
 
 static inline std::string &ExtractUntilTagDelim(std::istream &istream, std::string &buffer);
 

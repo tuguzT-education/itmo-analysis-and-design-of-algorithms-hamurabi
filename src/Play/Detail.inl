@@ -1,6 +1,8 @@
 #ifndef PLAY_DETAIL_INL
 #define PLAY_DETAIL_INL
 
+#include "Detail.hpp"
+
 namespace play::detail {
 
 void InsertGreetings(std::ostream &ostream) {
@@ -94,6 +96,10 @@ void InsertGoodbye(std::ostream &ostream) {
     ostream << "\nSO LONG FOR NOW.\n";
 }
 
+void InsertOldGameFound(std::ostream &ostream) {
+    ostream << "HAMURABI:  I FOUND SOME OLD PAPERS OF YOUR GOVERNANCE!\n";
+}
+
 constexpr hamurabi::string_literal kExitCommand = "exit";
 
 constexpr bool CanExit(const std::string_view string) noexcept {
@@ -134,6 +140,9 @@ template<class... Ts>
 struct overloaded : Ts ... {
     using Ts::operator()...;
 };
+
+template<class... Ts>
+overloaded(Ts...) -> overloaded<Ts...>;
 
 template<class T>
 ExitOr<hamurabi::AreaToBuy> ExtractAreaToBuy(std::istream &istream, std::ostream &ostream,
@@ -266,6 +275,72 @@ ExitOr<hamurabi::RoundInput> ExtractRoundInput(std::istream &istream, std::ostre
     }
     ostream << "\n";
     return std::get<hamurabi::RoundInput>(result.value());
+}
+
+constexpr hamurabi::string_literal kSaveFileName = "game.yaml";
+
+template<class T>
+void InsertGame(std::fstream &file, const hamurabi::Game<T> &game) {
+    file.open(kSaveFileName, std::fstream::out | std::fstream::trunc);
+    hamurabi::ser::InsertGame(file, game, hamurabi::ser::Format::YAML);
+    file.close();
+}
+
+template<class T>
+hamurabi::ser::ExtractResult ExtractGame(std::istream &istream, std::ostream &ostream,
+                                         std::fstream &file, hamurabi::Game<T> &game) {
+    namespace ser = hamurabi::serialization;
+
+    file.open(kSaveFileName, std::fstream::in);
+    if (!file.is_open()) {
+        file.clear();
+        return ser::ExtractResult::Success;
+    }
+    InsertOldGameFound(ostream);
+    const auto continue_or_start_new = ExtractContinueOrStartNew(istream, ostream);
+    switch (continue_or_start_new) {
+        case ContinueOrStartNew::StartNew: {
+            file.close();
+            return ser::ExtractResult::Success;
+        }
+        case ContinueOrStartNew::Continue: {
+            break;
+        }
+    }
+    const auto extract_result = ser::ExtractGame(file, game, ser::Format::YAML);
+    file.close();
+    return extract_result;
+}
+
+constexpr hamurabi::string_literal kContinueCommand = "continue";
+
+constexpr bool CanContinue(std::string_view string) noexcept {
+    return hamurabi::detail::Trim(string) == kContinueCommand;
+}
+
+constexpr hamurabi::string_literal kStartNewCommand = "new";
+
+constexpr bool CanStartNew(std::string_view string) noexcept {
+    return hamurabi::detail::Trim(string) == kStartNewCommand;
+}
+
+[[nodiscard]]
+ContinueOrStartNew ExtractContinueOrStartNew(std::istream &istream, std::ostream &ostream) {
+    constexpr auto message = "SHALL WE CONTINUE? OR MAYBE START WITH A CLEAN NEW PAPER? ";
+    constexpr auto error_message = "HAMURABI: I CANNOT DO WHAT YOU WISH.  NOW THEN,\n";
+    std::string buffer;
+
+    while (true) {
+        ostream << message;
+        std::getline(istream, buffer);
+        if (CanContinue(buffer)) {
+            return ContinueOrStartNew::Continue;
+        }
+        if (CanStartNew(buffer)) {
+            return ContinueOrStartNew::StartNew;
+        }
+        ostream << error_message;
+    }
 }
 
 }
